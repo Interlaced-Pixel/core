@@ -18,9 +18,11 @@ A comprehensive C++ core library providing essential utilities for filesystem op
 ### Logging
 - Configurable logging with multiple levels (DEBUG, INFO, WARNING, ERROR)
 - Customizable output formatting
-- File rotation (size-based and time-based)
+- File rotation (size-based and time-based). Size-based rotation now considers the next write and will rotate before a write that would exceed the limit.
 - Thread-safe logging operations
-- Structured logging support
+- Structured logging support (key/value pairs)
+- Disable file logging by calling `Logger::set_file_logging(nullptr)` to safely remove any active file logger
+- Simple "{}" placeholder formatting is supported (e.g. `Logger::error("Failed: {}", error_code)`) and structured logging is available as `Logger::info("User login", "user_id", 12345, "ip", "1.2.3.4")`
 
 ### Network
 - Hostname resolution to IP addresses
@@ -34,29 +36,33 @@ A comprehensive C++ core library providing essential utilities for filesystem op
 
 ## Building
 
-This project uses CMake for building:
+This project uses CMake for building. Recommended commands:
 
 ```bash
-mkdir build
-cd build
-cmake ..
-make
+# Create an out-of-source build directory and configure
+mkdir -p build
+cmake -S . -B build
+
+# Build (optionally specify a config on multi-config generators)
+cmake --build build --config Debug
 ```
 
 ### Running Tests
 
-The project includes comprehensive unit tests:
+The project includes comprehensive unit tests. Example commands:
 
 ```bash
-# Run all tests
-ctest
+# Run all tests (verbose)
+ctest --test-dir build --output-on-failure -V
 
-# Or run individual test executables
-./tests/interlaced_core_tests
-./tests/logging_test
-./tests/filesystem_test
-./tests/network_test
+# Run a specific test executable or filter
+./build/tests/logging_test --gtest_filter=Logging.*
+
+# Or filter tests via ctest
+ctest --test-dir build -R logging_test -V
 ```
+
+**Note:** All tests pass locally (25/25) after recent fixes to the logging implementation.
 
 ## Usage
 

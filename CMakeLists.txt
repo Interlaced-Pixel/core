@@ -16,6 +16,23 @@ target_include_directories(interlaced_core INTERFACE
     $<INSTALL_INTERFACE:include>
 )
 
+# Enable testing
+enable_testing()
+
+# Fetch GTest
+include(FetchContent)
+FetchContent_Declare(
+  googletest
+  URL https://github.com/google/googletest/archive/03597a01ee50ed33e9dfd640b249b4be3799d395.zip
+  DOWNLOAD_EXTRACT_TIMESTAMP ON
+)
+# For Windows: Prevent overriding the parent project's compiler/linker on Windows
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(googletest)
+
+# Add tests subdirectory so test executables are built
+add_subdirectory(tests)
+
 # Install rules (for distribution)
 install(TARGETS interlaced_core
         EXPORT interlaced_core-targets

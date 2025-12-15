@@ -29,6 +29,8 @@
 #include <iomanip>
 #include <iostream>
 #include <memory>
+#include <cstddef>
+#include <cstring> // for strstr used to detect placeholder patterns
 #include <mutex>
 #include <sstream>
 #include <string>
@@ -173,8 +175,8 @@ public:
         }
       }
 
-      // Check if we need to rotate
-      if (should_rotate()) {
+      // Check if we need to rotate (considering the upcoming write size)
+      if (should_rotate(message.length() + 1)) {
         rotate();
       }
 
@@ -224,10 +226,14 @@ private:
    *
    * @return true if we should rotate, false otherwise
    */
-  bool should_rotate() {
+  // Determine whether a rotation is required. For size-based rotation,
+  // the optional next_write_size parameter allows deciding based on the size
+  // of the next write so we rotate before exceeding the limit.
+  bool should_rotate(size_t next_write_size = 0) {
     try {
       if (strategy_ == RotationStrategy::SIZE) {
-        return current_file_size_ >= max_file_size_;
+        // Rotate if the next write would exceed the maximum file size
+        return (current_file_size_ + next_write_size) >= max_file_size_;
       } else { // TIME strategy
         auto now = std::chrono::steady_clock::now();
         auto elapsed = std::chrono::duration_cast<std::chrono::hours>(
@@ -453,6 +459,16 @@ public:
     std::lock_guard<std::mutex> lock(log_mutex);
     file_logger = std::make_unique<RotatingFileLogger>(filename, rotation_hours,
                                                        max_files);
+  }
+
+  /**
+   * @brief Disable file logging (clear file logger)
+   *
+   * Accepts nullptr to explicitly clear/disable file logging.
+   */
+  static void set_file_logging(std::nullptr_t) {
+    std::lock_guard<std::mutex> lock(log_mutex);
+    file_logger.reset();
   }
 
   /**
@@ -804,11 +820,49 @@ public:
    * @param format The format string
    * @param args Arguments to format
    */
+  // Dispatch for APIs that accept a leading const char* and variadic arguments.
+  // Behavior (runtime + compile-time checks):
+  // - If the format contains "{}" then treat as a format string and apply
+  //   the simple '{}' substitution.
+  // - Else if there are exactly two args and their types are (const char*, int)
+  //   treat the call as (message, file, line).
+  // - Else if additional arguments exist, treat as structured key/value pairs.
+  // - Otherwise, treat it as a simple message.
+  template <typename... Args>
+  static void format_and_log_with_format_string(LogLevel level, const char *format, Args &&...args) {
+    // Quick runtime check for '{}' placeholders
+    if (std::strstr(format, "{}") != nullptr) {
+      std::ostringstream oss;
+      format_message(oss, format, std::forward<Args>(args)...);
+      log(level, oss.str());
+      return;
+    }
+
+    // No placeholders: special-case (file, line) pair
+    if constexpr (sizeof...(Args) == 2) {
+      using First = std::tuple_element_t<0, std::tuple<Args...>>;
+      using Second = std::tuple_element_t<1, std::tuple<Args...>>;
+      if constexpr (std::is_convertible_v<std::decay_t<First>, const char *> &&
+                    std::is_integral_v<std::decay_t<Second>>) {
+        log(level, std::string(format), std::forward<Args>(args)...);
+        return;
+      }
+    }
+
+    if constexpr (sizeof...(Args) > 0) {
+      // Treat as structured key/value pairs and forward
+      log(level, std::string(format), std::forward<Args>(args)...);
+      return;
+    } else {
+      // No extra args: simple message
+      log(level, std::string(format));
+      return;
+    }
+  }
+
   template <typename... Args>
   static void debug(const char *format, Args &&...args) {
-    std::ostringstream oss;
-    format_message(oss, format, std::forward<Args>(args)...);
-    debug(oss.str());
+    format_and_log_with_format_string<Args...>(LOG_DEBUG, format, std::forward<Args>(args)...);
   }
 
   /**
@@ -820,9 +874,7 @@ public:
    */
   template <typename... Args>
   static void info(const char *format, Args &&...args) {
-    std::ostringstream oss;
-    format_message(oss, format, std::forward<Args>(args)...);
-    info(oss.str());
+    format_and_log_with_format_string<Args...>(LOG_INFO, format, std::forward<Args>(args)...);
   }
 
   /**
@@ -834,9 +886,7 @@ public:
    */
   template <typename... Args>
   static void warning(const char *format, Args &&...args) {
-    std::ostringstream oss;
-    format_message(oss, format, std::forward<Args>(args)...);
-    warning(oss.str());
+    format_and_log_with_format_string<Args...>(LOG_WARNING, format, std::forward<Args>(args)...);
   }
 
   /**
@@ -848,9 +898,7 @@ public:
    */
   template <typename... Args>
   static void error(const char *format, Args &&...args) {
-    std::ostringstream oss;
-    format_message(oss, format, std::forward<Args>(args)...);
-    error(oss.str());
+    format_and_log_with_format_string<Args...>(LOG_ERROR, format, std::forward<Args>(args)...);
   }
 
   /**
