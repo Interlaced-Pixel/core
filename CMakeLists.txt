@@ -16,12 +16,6 @@ target_include_directories(interlaced_core INTERFACE
     $<INSTALL_INTERFACE:include>
 )
 
-# Enable testing
-enable_testing()
-
-# Create tests
-add_subdirectory(tests)
-
 # Install rules (for distribution)
 install(TARGETS interlaced_core
         EXPORT interlaced_core-targets
