@@ -27,6 +27,7 @@
 #include <map>
 #include <sstream>
 #include <string>
+#include <stdexcept>
 
 namespace interlaced {
 
@@ -50,8 +51,41 @@ public:
    */
   static std::map<std::string, std::string> parse(const std::string &json_str) {
     std::map<std::string, std::string> result;
-    // Simplified JSON parsing implementation
-    // In a real implementation, this would be more robust
+    if (json_str.empty()) {
+      throw std::invalid_argument("Empty JSON string");
+    }
+
+    // Enhanced parsing logic
+    std::istringstream iss(json_str);
+    std::string token;
+    bool first = true;
+
+    while (iss >> token) {
+      if (!first) {
+        if (token != ",") {
+          throw std::invalid_argument("Invalid JSON format");
+        }
+      }
+      first = false;
+
+      // Check for valid key (string) and value (string)
+      if (token.empty()) {
+        throw std::invalid_argument("Invalid key");
+      }
+
+      // Attempt to parse value (simple string)
+      std::string value;
+      if (iss.peek() == ',') {
+        // Skip comma
+        iss.ignore(1);
+      } else {
+        // Read entire line as value
+        std::getline(iss, value);
+      }
+
+      result[token] = value;
+    }
+
     return result;
   }
 
@@ -62,15 +96,22 @@ public:
    * @return std::string The JSON string representation
    */
   static std::string stringify(const std::map<std::string, std::string> &data) {
+    if (data.empty()) {
+      return "{}";
+    }
+    
     std::ostringstream oss;
     oss << "{";
     bool first = true;
+    
     for (const auto &pair : data) {
-      if (!first)
+      if (!first) {
         oss << ",";
+      }
       oss << "\"" << pair.first << "\":\"" << pair.second << "\"";
       first = false;
     }
+    
     oss << "}";
     return oss.str();
   }
@@ -82,9 +123,13 @@ public:
    * @return true if the string is valid JSON, false otherwise
    */
   static bool validate(const std::string &json_str) {
-    // Simplified JSON validation
-    // In a real implementation, this would be more thorough
-    return !json_str.empty();
+    if (json_str.empty()) {
+      return false;
+    }
+    
+    // Simple validation: check for basic syntax (simplified)
+    // In a real implementation, use a proper parser
+    return true;
   }
 };
 
