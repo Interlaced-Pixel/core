@@ -38,20 +38,32 @@ A comprehensive C++ core library providing essential utilities for filesystem op
 
 ## Building
 
-This project uses CMake for building. Recommended commands:
+This project uses a Makefile for building. Run the following commands:
 
 ```bash
-# Create an out-of-source build directory and configure
-mkdir -p build
-cmake -S . -B build
+# Build the test binary
+make test
 
-# Build (optionally specify a config on multi-config generators)
-cmake --build build --config Debug
+# Run the tests
+make run-tests
+
+# Generate coverage report
+make coverage
 ```
 
 ### Testing
 
-This repository does not include unit tests in this branch. Tests were removed; re-add them as needed.
+Unit tests are included and can be run using the Makefile. The tests use doctest for assertions and aim for at least 95% code coverage.
+
+```bash
+# Run tests
+make run-tests
+
+# Generate coverage report (HTML and LCOV)
+make coverage
+```
+
+Coverage reports are generated in the `coverage/` directory.
 
 ## Usage
 
@@ -134,7 +146,9 @@ auto download_result = interlaced::core::network::Network::download_file(
 ## Requirements
 
 - C++17 or later
-- CMake 3.10 or later
+- Clang++ (recommended) or GCC
+- Make
+- LLVM tools (for coverage on macOS: xcrun llvm-profdata, xcrun llvm-cov)
 - For Windows: MinGW-w64 or Visual Studio with Windows SDK
 - For Unix-like systems: GCC/Clang with standard development tools
 
@@ -150,7 +164,17 @@ Platform-specific implementations are included where necessary to ensure consist
 
 ## Testing
 
-This repository does not include unit tests in this branch.
+Unit tests are included and can be run using the Makefile. The tests use doctest for assertions and aim for at least 95% code coverage.
+
+```bash
+# Run tests
+make run-tests
+
+# Generate coverage report (HTML and LCOV)
+make coverage
+```
+
+Coverage reports are generated in the `coverage/` directory.
 
 ## Contributing
 
