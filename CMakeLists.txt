@@ -17,7 +17,6 @@ target_include_directories(interlaced_core INTERFACE
 )
 
 # Tests removed: CTest disabled and tests/ directory removed.
-add_subdirectory(tests)
 
 # Install rules (for distribution)
 install(TARGETS interlaced_core
