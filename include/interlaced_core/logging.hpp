@@ -849,12 +849,12 @@ public:
       }
     }
 
-    if constexpr (sizeof...(Args) > 0) {
+    if constexpr (sizeof...(Args) > 0 && sizeof...(Args) % 2 == 0) {
       // Treat as structured key/value pairs and forward
       log(level, std::string(format), std::forward<Args>(args)...);
       return;
     } else {
-      // No extra args: simple message
+      // No extra args or odd number: simple message
       log(level, std::string(format));
       return;
     }

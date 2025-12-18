@@ -16,7 +16,7 @@ The "why" behind the header-only design is to simplify integration without linki
 - Compile commands are exported for IDE integration.
 
 ## Testing
-This repository does not include unit tests in this branch.
+Unit tests are included and should achieve at least 95% code coverage.
 
 ## Developer Workflows
 - CI/CD via GitHub Actions in `.github/workflows/build-test.yml` (assumes standard build and test steps).
@@ -38,3 +38,4 @@ This repository does not include unit tests in this branch.
 - No third-party dependencies are required; the testing helpers are part of this repository.
 - Maintain header-only design; no compiled binaries.
 - Follow C++17 standard; no newer features.
+- Aim for at least 95% code coverage for unit tests.
