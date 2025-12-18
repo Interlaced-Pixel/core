@@ -45,9 +45,9 @@ coverage: run-tests
 	@echo "Merging raw profiles -> $(COVERAGE_DIR)/coverage.profdata";
 	@$(LLVM_PROFDATA) merge -sparse $(BIN_DIR)/*.profraw -o $(COVERAGE_DIR)/coverage.profdata
 	@echo "Exporting lcov -> $(COVERAGE_DIR)/lcov.info";
-	@$(LLVM_COV) export --format=lcov $(TEST_BIN) -instr-profile=$(COVERAGE_DIR)/coverage.profdata > $(COVERAGE_DIR)/lcov.info
+	@$(LLVM_COV) export --format=lcov --ignore-filename-regex="third_party/.*" $(TEST_BIN) -instr-profile=$(COVERAGE_DIR)/coverage.profdata > $(COVERAGE_DIR)/lcov.info
 	@echo "Generating HTML -> $(COVERAGE_DIR)/html";
-	@$(LLVM_COV) show $(TEST_BIN) -instr-profile=$(COVERAGE_DIR)/coverage.profdata -format=html -output-dir=$(COVERAGE_DIR)/html -show-expansions -show-line-counts-or-regions
+	@$(LLVM_COV) show --ignore-filename-regex="third_party/.*" $(TEST_BIN) -instr-profile=$(COVERAGE_DIR)/coverage.profdata -format=html -output-dir=$(COVERAGE_DIR)/html -show-expansions -show-line-counts-or-regions
 	@echo "Open: $(COVERAGE_DIR)/html/index.html"
 
 clean:
