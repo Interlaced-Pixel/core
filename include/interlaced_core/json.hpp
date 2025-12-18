@@ -37,16 +37,20 @@ namespace core {
 namespace json {
 
 /**
- * @brief Simple JSON parser and generator with enhanced capabilities
+ * @brief Simple JSON parser and generator with enhanced capabilities.
  *
- * This class provides robust JSON parsing and generation functionality.
- * Supports basic JSON syntax including key-value pairs, nested objects,
- * and array structures.
+ * @details Provides lightweight parsing and stringification helpers for
+ * key-value JSON objects. Nested objects and arrays are preserved as raw
+ * substrings rather than fully materialized structures to keep the
+ * implementation header-only and dependency free.
  */
 class JSON {
 private:
   /**
-   * @brief Helper to skip whitespace characters
+   * @brief Skip whitespace characters in-place.
+   *
+   * @param str Input JSON string being parsed.
+   * @param pos Current parsing offset; advanced past any whitespace.
    */
   static void skip_whitespace(const std::string &str, size_t &pos) {
     while (pos < str.length() && std::isspace(static_cast<unsigned char>(str[pos]))) {
@@ -55,7 +59,10 @@ private:
   }
 
   /**
-   * @brief Helper to unescape a JSON string (handles \", \\, \n, \r, \t, \b, \f)
+   * @brief Convert JSON escape sequences back to their literal characters.
+   *
+   * @param str Raw JSON string segment containing escape sequences.
+   * @return std::string Unescaped string content.
    */
   static std::string unescape_string(const std::string &str) {
     std::string result;
@@ -83,7 +90,10 @@ private:
   }
 
   /**
-   * @brief Helper to escape a string for JSON (adds escape sequences for special chars)
+   * @brief Escape special characters so a string is JSON-safe.
+   *
+   * @param str Plain string to encode for JSON output.
+   * @return std::string Escaped string suitable for inclusion in JSON.
    */
   static std::string escape_string(const std::string &str) {
     std::string result;
@@ -105,7 +115,12 @@ private:
   }
 
   /**
-   * @brief Parse a JSON string value (expects opening quote already consumed)
+   * @brief Parse a JSON string value.
+   *
+   * @param str JSON text being parsed; the opening quote is already consumed.
+   * @param pos Mutable offset; advanced past the closing quote.
+   * @return std::string Extracted string with escapes resolved.
+   * @throws std::invalid_argument When the string literal is unterminated.
    */
   static std::string parse_string(const std::string &str, size_t &pos) {
     std::string result;
@@ -128,7 +143,10 @@ private:
   }
 
   /**
-   * @brief Check if a string represents a valid number
+   * @brief Check if a string token is a valid JSON number.
+   *
+   * @param str Candidate numeric token.
+   * @return true if the token matches JSON number grammar, false otherwise.
    */
   static bool is_number(const std::string &str) {
     if (str.empty()) return false;
@@ -170,11 +188,13 @@ private:
 
 public:
   /**
-   * @brief Parse JSON string into a hierarchical structure
+   * @brief Parse a flat JSON object into key-value pairs.
    *
-   * @param json_str The JSON string to parse
-   * @return std::map<std::string, std::string> Parsed key-value pairs
-   * @throws std::invalid_argument if the input is not valid JSON
+   * @param json_str Input JSON text; must represent an object.
+   * @return std::map<std::string, std::string> Map of keys to raw values
+   * (strings are unescaped, primitives kept as-is, nested structures stored
+   * as their original substrings).
+   * @throws std::invalid_argument When the input is empty or structurally invalid.
    */
   static std::map<std::string, std::string> parse(const std::string &json_str) {
     std::map<std::string, std::string> result;
@@ -186,50 +206,43 @@ public:
     size_t pos = 0;
     skip_whitespace(json_str, pos);
     
-    // Validate basic structure
     if (pos >= json_str.length() || json_str[pos] != '{') {
       throw std::invalid_argument("JSON object must start with '{'");
     }
-    pos++; // Skip opening brace
+    pos++;
     
     skip_whitespace(json_str, pos);
     
-    // Handle empty object
     if (pos < json_str.length() && json_str[pos] == '}') {
       return result;
     }
     
-    // Parse key-value pairs
     while (pos < json_str.length()) {
       skip_whitespace(json_str, pos);
       
-      // Parse key (must be a string)
       if (pos >= json_str.length() || json_str[pos] != '"') {
         throw std::invalid_argument("Expected string key");
       }
-      pos++; // Skip opening quote
+      pos++;
       
       std::string key = parse_string(json_str, pos);
       
       skip_whitespace(json_str, pos);
       
-      // Expect colon
       if (pos >= json_str.length() || json_str[pos] != ':') {
         throw std::invalid_argument("Expected ':' after key");
       }
-      pos++; // Skip colon
+      pos++;
       
       skip_whitespace(json_str, pos);
       
-      // Parse value
       std::string value;
       if (pos >= json_str.length()) {
         throw std::invalid_argument("Unexpected end of JSON");
       }
       
       if (json_str[pos] == '"') {
-        // String value
-        pos++; // Skip opening quote
+        pos++;
         value = parse_string(json_str, pos);
       } else if (json_str[pos] == 't' && pos + 4 <= json_str.length() && json_str.substr(pos, 4) == "true") {
         value = "true";
@@ -241,21 +254,17 @@ public:
         value = "null";
         pos += 4;
       } else if (json_str[pos] == '-' || std::isdigit(static_cast<unsigned char>(json_str[pos]))) {
-        // Number value - parse and validate
         size_t start = pos;
         if (json_str[pos] == '-') pos++;
         
-        // Must have at least one digit after optional minus
         if (pos >= json_str.length() || !std::isdigit(static_cast<unsigned char>(json_str[pos]))) {
           throw std::invalid_argument("Invalid number format");
         }
         
-        // Parse integer part
         while (pos < json_str.length() && std::isdigit(static_cast<unsigned char>(json_str[pos]))) {
           pos++;
         }
         
-        // Parse optional decimal part
         if (pos < json_str.length() && json_str[pos] == '.') {
           pos++;
           if (pos >= json_str.length() || !std::isdigit(static_cast<unsigned char>(json_str[pos]))) {
@@ -266,7 +275,6 @@ public:
           }
         }
         
-        // Parse optional exponent part
         if (pos < json_str.length() && (json_str[pos] == 'e' || json_str[pos] == 'E')) {
           pos++;
           if (pos < json_str.length() && (json_str[pos] == '+' || json_str[pos] == '-')) {
@@ -282,7 +290,6 @@ public:
         
         value = json_str.substr(start, pos - start);
       } else if (json_str[pos] == '{' || json_str[pos] == '[') {
-        // Nested object or array - store as-is for now
         int depth = 0;
         size_t start = pos;
         
@@ -304,16 +311,15 @@ public:
       
       skip_whitespace(json_str, pos);
       
-      // Check for comma or closing brace
       if (pos >= json_str.length()) {
         throw std::invalid_argument("Unexpected end of JSON");
       }
       
       if (json_str[pos] == '}') {
-        pos++; // Skip closing brace
+        pos++;
         break;
       } else if (json_str[pos] == ',') {
-        pos++; // Skip comma
+        pos++;
       } else {
         throw std::invalid_argument("Expected ',' or '}'");
       }
@@ -323,10 +329,11 @@ public:
   }
 
   /**
-   * @brief Convert map to JSON string
+   * @brief Convert key-value pairs to a JSON object string.
    *
-   * @param data The key-value pairs to convert to JSON
-   * @return std::string The JSON string representation
+   * @param data Map of keys to values; primitives and nested JSON must already
+   * be encoded appropriately.
+   * @return std::string JSON object text.
    */
   static std::string stringify(const std::map<std::string, std::string> &data) {
     if (data.empty()) {
@@ -342,19 +349,14 @@ public:
         oss << ",";
       }
       
-      // Always quote the key
       oss << "\"" << escape_string(pair.first) << "\":";
       
-      // Check if value should be quoted
       const std::string &value = pair.second;
       if (value == "true" || value == "false" || value == "null" || is_number(value)) {
-        // Boolean, null, or number - no quotes
         oss << value;
       } else if (!value.empty() && (value[0] == '{' || value[0] == '[')) {
-        // Nested object or array - no quotes
         oss << value;
       } else {
-        // String value - add quotes and escape
         oss << "\"" << escape_string(value) << "\"";
       }
       
@@ -366,10 +368,10 @@ public:
   }
 
   /**
-   * @brief Validate JSON string
+   * @brief Validate basic JSON structure.
    *
-   * @param json_str The JSON string to validate
-   * @return true if the string is valid JSON, false otherwise
+   * @param json_str Candidate JSON text.
+   * @return true if quotes are balanced and braces/brackets are properly nested, false otherwise.
    */
   static bool validate(const std::string &json_str) {
     if (json_str.empty()) {
@@ -379,12 +381,10 @@ public:
     size_t pos = 0;
     skip_whitespace(json_str, pos);
     
-    // Check for basic structure: starts with '{' or '['
     if (pos >= json_str.length() || (json_str[pos] != '{' && json_str[pos] != '[')) {
       return false;
     }
 
-    // Check for proper nesting and quotes
     int depth = 0;
     bool in_string = false;
     bool escape_next = false;
@@ -415,14 +415,12 @@ public:
         depth++;
       } else if (c == '}' || c == ']') {
         depth--;
-        // If depth goes negative, we have unmatched closing brackets
         if (depth < 0) {
           return false;
         }
       }
     }
     
-    // Must not be in a string and depth must be zero
     return !in_string && depth == 0;
   }
 };
