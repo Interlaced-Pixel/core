@@ -63,7 +63,7 @@ make run-tests
 make coverage
 ```
 
-Coverage reports are generated in the `coverage/` directory.
+Coverage reports are generated in the `build/coverage` directory.
 
 ## Usage
 
@@ -174,7 +174,7 @@ make run-tests
 make coverage
 ```
 
-Coverage reports are generated in the `coverage/` directory.
+Coverage reports are generated in the `build/coverage` directory.
 
 ## Contributing
 

@@ -40,7 +40,7 @@ endif
 
 TEST_DIR := tests
 BIN_DIR := build/tests
-COVERAGE_DIR := coverage
+COVERAGE_DIR := build/coverage
 
 SOURCES := $(wildcard $(TEST_DIR)/*.cc)
 TEST_BIN := $(BIN_DIR)/interlaced_core_tests
