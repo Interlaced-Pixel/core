@@ -1,5 +1,4 @@
 # Build directories
-build-coverage/
 build/
 build/_deps/
 cmake-build-*/
@@ -46,10 +45,6 @@ test_log*
 *.bak
 *.backup
 
-# Coverage reports
-*.gcda
-*.gcno
-*.gcov
 
 # Clangd cache
 .clangd/

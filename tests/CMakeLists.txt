@@ -14,13 +14,8 @@ target_link_libraries(logging_test
     interlaced_core
 )
 
-# Add test with coverage environment variable
+# Add test
 add_test(NAME logging_test COMMAND logging_test)
-if(ENABLE_COVERAGE AND CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  set_tests_properties(logging_test PROPERTIES
-    ENVIRONMENT "LLVM_PROFILE_FILE=./%p-%m.profraw"
-  )
-endif()
 
 # Create test executable for json
 add_executable(json_test json_test.cc)
@@ -35,10 +30,5 @@ target_link_libraries(json_test
     interlaced_core
 )
 
-# Add test with coverage environment variable
+# Add test
 add_test(NAME json_test COMMAND json_test)
-if(ENABLE_COVERAGE AND CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  set_tests_properties(json_test PROPERTIES
-    ENVIRONMENT "LLVM_PROFILE_FILE=./%p-%m.profraw"
-  )
-endif()

@@ -4,11 +4,10 @@
     {
       "name": "default",
       "displayName": "Default",
-      "description": "Default build with code coverage",
+      "description": "Default",
       "binaryDir": "${sourceDir}/build",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug",
-        "ENABLE_COVERAGE": "ON"
+        "CMAKE_BUILD_TYPE": "Debug"
       }
     }
   ],
