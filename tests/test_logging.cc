@@ -5,6 +5,7 @@
 #include <fstream>
 #include <sstream>
 #include <thread>
+#include <vector>
 
 namespace fs = std::filesystem;
 using namespace interlaced::core::logging;
