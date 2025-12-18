@@ -343,6 +343,56 @@ TEST(JSONTest, StringifyAllEscapeSequences) {
   EXPECT_EQ(result, expected);
 }
 
+// Test parsing invalid numbers - multiple decimal points
+TEST(JSONTest, ParseInvalidNumberMultipleDecimals) {
+  std::string json = R"({"value":1.2.3})";
+  EXPECT_THROW(JSON::parse(json), std::invalid_argument);
+}
+
+// Test parsing invalid numbers - invalid exponent
+TEST(JSONTest, ParseInvalidNumberBadExponent) {
+  std::string json = R"({"value":1e})";
+  EXPECT_THROW(JSON::parse(json), std::invalid_argument);
+}
+
+// Test parsing invalid numbers - just a minus sign
+TEST(JSONTest, ParseInvalidNumberJustMinus) {
+  std::string json = R"({"value":-})";
+  EXPECT_THROW(JSON::parse(json), std::invalid_argument);
+}
+
+// Test parsing truncated boolean true
+TEST(JSONTest, ParseInvalidTruncatedTrue) {
+  std::string json = R"({"value":tr})";
+  EXPECT_THROW(JSON::parse(json), std::invalid_argument);
+}
+
+// Test parsing truncated boolean false
+TEST(JSONTest, ParseInvalidTruncatedFalse) {
+  std::string json = R"({"value":fal})";
+  EXPECT_THROW(JSON::parse(json), std::invalid_argument);
+}
+
+// Test parsing truncated null
+TEST(JSONTest, ParseInvalidTruncatedNull) {
+  std::string json = R"({"value":nu})";
+  EXPECT_THROW(JSON::parse(json), std::invalid_argument);
+}
+
+// Test parsing valid decimal without leading zero
+TEST(JSONTest, ParseDecimalWithoutLeadingZero) {
+  std::string json = R"({"value":0.5})";
+  auto result = JSON::parse(json);
+  EXPECT_EQ(result["value"], "0.5");
+}
+
+// Test parsing with mixed brackets in nested structures
+TEST(JSONTest, ParseMixedNestedStructures) {
+  std::string json = R"({"obj":{"arr":[1,2,3]}})";
+  auto result = JSON::parse(json);
+  EXPECT_EQ(result["obj"], R"({"arr":[1,2,3]})");
+}
+
 int main(int argc, char **argv) {
   ::testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();

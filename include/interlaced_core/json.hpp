@@ -231,37 +231,65 @@ public:
         // String value
         pos++; // Skip opening quote
         value = parse_string(json_str, pos);
-      } else if (json_str[pos] == 't' && json_str.substr(pos, 4) == "true") {
+      } else if (json_str[pos] == 't' && pos + 4 <= json_str.length() && json_str.substr(pos, 4) == "true") {
         value = "true";
         pos += 4;
-      } else if (json_str[pos] == 'f' && json_str.substr(pos, 5) == "false") {
+      } else if (json_str[pos] == 'f' && pos + 5 <= json_str.length() && json_str.substr(pos, 5) == "false") {
         value = "false";
         pos += 5;
-      } else if (json_str[pos] == 'n' && json_str.substr(pos, 4) == "null") {
+      } else if (json_str[pos] == 'n' && pos + 4 <= json_str.length() && json_str.substr(pos, 4) == "null") {
         value = "null";
         pos += 4;
       } else if (json_str[pos] == '-' || std::isdigit(static_cast<unsigned char>(json_str[pos]))) {
-        // Number value
+        // Number value - parse and validate
         size_t start = pos;
         if (json_str[pos] == '-') pos++;
-        while (pos < json_str.length() && 
-               (std::isdigit(static_cast<unsigned char>(json_str[pos])) || 
-                json_str[pos] == '.' || json_str[pos] == 'e' || json_str[pos] == 'E' || 
-                json_str[pos] == '+' || json_str[pos] == '-')) {
+        
+        // Must have at least one digit after optional minus
+        if (pos >= json_str.length() || !std::isdigit(static_cast<unsigned char>(json_str[pos]))) {
+          throw std::invalid_argument("Invalid number format");
+        }
+        
+        // Parse integer part
+        while (pos < json_str.length() && std::isdigit(static_cast<unsigned char>(json_str[pos]))) {
           pos++;
         }
+        
+        // Parse optional decimal part
+        if (pos < json_str.length() && json_str[pos] == '.') {
+          pos++;
+          if (pos >= json_str.length() || !std::isdigit(static_cast<unsigned char>(json_str[pos]))) {
+            throw std::invalid_argument("Invalid number format");
+          }
+          while (pos < json_str.length() && std::isdigit(static_cast<unsigned char>(json_str[pos]))) {
+            pos++;
+          }
+        }
+        
+        // Parse optional exponent part
+        if (pos < json_str.length() && (json_str[pos] == 'e' || json_str[pos] == 'E')) {
+          pos++;
+          if (pos < json_str.length() && (json_str[pos] == '+' || json_str[pos] == '-')) {
+            pos++;
+          }
+          if (pos >= json_str.length() || !std::isdigit(static_cast<unsigned char>(json_str[pos]))) {
+            throw std::invalid_argument("Invalid number format");
+          }
+          while (pos < json_str.length() && std::isdigit(static_cast<unsigned char>(json_str[pos]))) {
+            pos++;
+          }
+        }
+        
         value = json_str.substr(start, pos - start);
       } else if (json_str[pos] == '{' || json_str[pos] == '[') {
         // Nested object or array - store as-is for now
         int depth = 0;
         size_t start = pos;
-        char open_char = json_str[pos];
-        char close_char = (open_char == '{') ? '}' : ']';
         
         do {
-          if (json_str[pos] == open_char || json_str[pos] == (open_char == '{' ? '[' : '{')) {
+          if (json_str[pos] == '{' || json_str[pos] == '[') {
             depth++;
-          } else if (json_str[pos] == close_char || json_str[pos] == (close_char == '}' ? ']' : '}')) {
+          } else if (json_str[pos] == '}' || json_str[pos] == ']') {
             depth--;
           }
           pos++;
