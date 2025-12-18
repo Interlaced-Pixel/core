@@ -11,9 +11,11 @@ A comprehensive C++ core library providing essential utilities for filesystem op
 - Path manipulation utilities
 
 ### JSON
-- Simple JSON parsing and generation
-- Support for strings, numbers, booleans, arrays, and objects
-- Stringify and parse operations
+- Header-only DOM parser and serializer (objects, arrays, numbers, booleans, strings, null)
+- Unicode escape handling (\uXXXX with surrogate pairs) and correct string escaping
+- Strict validation with detailed error reporting (`parse_or_throw`) plus a boolean `validate` helper
+- Compact and pretty-print serialization with configurable indentation and solidus escaping
+- Deterministic numeric formatting (stores original representation for round-trips)
 
 ### Logging
 - Configurable logging with multiple levels (DEBUG, INFO, WARNING, ERROR)
@@ -88,9 +90,26 @@ interlaced::core::filesystem::FileSystem::create_directories("path/to/dir");
 #### JSON Operations
 ```cpp
 #include "interlaced_core/json.hpp"
+using interlaced::core::json::JSON;
+using interlaced::core::json::StringifyOptions;
 
-std::map<std::string, std::string> data = {{"key", "value"}};
-std::string json = interlaced::core::json::JSON::stringify(data);
+// Parse (throws on error with position info)
+JSON doc = JSON::parse_or_throw(R"({"name":"Ada","scores":[1,2,3],"active":true})");
+
+// Access object members
+const JSON *name = doc.find("name");
+if (name && name->is_string()) {
+    std::cout << "Name: " << name->as_string() << "\n";
+}
+
+// Mutate and serialize (compact)
+JSON &user = doc["user"];
+user = JSON::object({{"id", JSON::number("42")}});
+std::string compact = doc.stringify();
+
+// Pretty-print
+StringifyOptions pretty{true /*pretty*/, 2 /*indent*/, false /*escape_solidus*/};
+std::string pretty_text = doc.stringify(pretty);
 ```
 
 #### Logging
