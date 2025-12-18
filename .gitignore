@@ -6,7 +6,6 @@ _codeql_build_dir/
 _codeql_detected_source_root
 
 # IDE files
-.continue/
 .zed/
 .cache/
 .vscode/
@@ -34,7 +33,6 @@ Makefile
 *.exe
 
 # Log files
-test_log*
 *.log
 
 # Temporary files
@@ -50,4 +48,3 @@ test_log*
 .clangd/
 compile_commands.json
 cmake_output.txt
-Testing/Temporary/CTestCostData.txt
