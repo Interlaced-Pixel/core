@@ -4,13 +4,33 @@ WARN := -Wall -Wextra -Wpedantic
 DBG := -O0 -g
 INCLUDES := -Iinclude -Ithird_party/doctest
 
-# LLVM/Clang coverage on macOS
-COV_CFLAGS := -fprofile-instr-generate -fcoverage-mapping
-COV_ENV := LLVM_PROFILE_FILE
+# Detect compiler type
+CXX_VERSION := $(shell $(CXX) --version 2>/dev/null)
+IS_CLANG := $(if $(findstring clang,$(CXX_VERSION)),1,0)
+IS_GCC := $(if $(findstring g++,$(CXX_VERSION)),1,0)
+IS_GCC := $(if $(findstring gcc,$(CXX_VERSION)),1,$(IS_GCC))
 
-# Use Xcode toolchain wrappers on macOS to locate llvm tools
-LLVM_PROFDATA := xcrun llvm-profdata
-LLVM_COV := xcrun llvm-cov
+# Set coverage flags based on compiler
+ifeq ($(IS_CLANG),1)
+  # LLVM/Clang coverage
+  COV_CFLAGS := -fprofile-instr-generate -fcoverage-mapping
+  COV_ENV := LLVM_PROFILE_FILE
+  # Use Xcode toolchain wrappers on macOS to locate llvm tools
+  LLVM_PROFDATA := xcrun llvm-profdata
+  LLVM_COV := xcrun llvm-cov
+else ifeq ($(IS_GCC),1)
+  # GCC coverage
+  COV_CFLAGS := --coverage
+  COV_ENV := 
+  LLVM_PROFDATA := echo "GCC coverage - skipping profdata merge"
+  LLVM_COV := echo "GCC coverage - skipping lcov export"
+else
+  # No coverage for unknown compiler
+  COV_CFLAGS := 
+  COV_ENV := 
+  LLVM_PROFDATA := echo "Unknown compiler - skipping profdata merge"
+  LLVM_COV := echo "Unknown compiler - skipping lcov export"
+endif
 
 TEST_DIR := tests
 BIN_DIR := build/tests
@@ -37,8 +57,11 @@ test: $(TEST_BIN)
 	@echo "Built test binary: $(TEST_BIN)"
 
 run-tests: test
-	@set -e; \
-	$(COV_ENV)="$(TEST_BIN).profraw" "$(TEST_BIN)"
+ifeq ($(IS_CLANG),1)
+	@$(COV_ENV)="$(TEST_BIN).profraw" "$(TEST_BIN)"
+else
+	@"$(TEST_BIN)"
+endif
 
 coverage: run-tests
 	@mkdir -p $(COVERAGE_DIR)/html
