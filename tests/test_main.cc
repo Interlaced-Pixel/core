@@ -1,9 +1,9 @@
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include "doctest.h"
-#include "interlaced_core/network.hpp"
-#include "interlaced_core/filesystem.hpp"
-#include "interlaced_core/logging.hpp"
-#include "interlaced_core/json.hpp"
+#include "network.hpp"
+#include "filesystem.hpp"
+#include "logging.hpp"
+#include "json.hpp"
 
 // Top-level sanity tests
 TEST_SUITE("interlaced_core_sanity") {

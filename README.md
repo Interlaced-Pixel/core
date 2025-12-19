@@ -18,11 +18,23 @@ A comprehensive C++ core library providing essential utilities for filesystem op
 - Deterministic numeric formatting (stores original representation for round-trips)
 
 ### Logging
-- Configurable logging with multiple levels (DEBUG, INFO, WARNING, ERROR)
+- Configurable logging with multiple levels (TRACE, DEBUG, INFO, WARNING, ERROR, FATAL)
 - Customizable output formatting
 - File rotation (size-based and time-based). Size-based rotation now considers the next write and will rotate before a write that would exceed the limit.
 - Thread-safe logging operations
 - Structured logging support (key/value pairs)
+- Fluent configuration using `Logger::LoggerConfig` and `Logger::LoggerConfigBuilder`
+- Named category loggers via `Logger::get("name")` and `Logger::LoggerRegistry`
+- Compile-time log-level filtering via setting preprocessor macro `INTERLACED_COMPILED_LOG_LEVEL` to one of:
+  - `INTERLACED_LOG_LEVEL_TRACE` (0) — enable all logs
+  - `INTERLACED_LOG_LEVEL_DEBUG` (1)
+  - `INTERLACED_LOG_LEVEL_INFO` (2)
+  - `INTERLACED_LOG_LEVEL_WARNING` (3)
+  - `INTERLACED_LOG_LEVEL_ERROR` (4)
+  - `INTERLACED_LOG_LEVEL_FATAL` (5)
+
+  Define `INTERLACED_COMPILED_LOG_LEVEL` before including `logging.hpp` to remove lower-level logging APIs at compile time (e.g., `#define INTERLACED_COMPILED_LOG_LEVEL INTERLACED_LOG_LEVEL_INFO`).
+
 - Disable file logging by calling `Logger::set_file_logging(nullptr)` to safely remove any active file logger
 - Simple "{}" placeholder formatting is supported (e.g. `Logger::error("Failed: {}", error_code)`) and structured logging is available as `Logger::info("User login", "user_id", 12345, "ip", "1.2.3.4")`
 
