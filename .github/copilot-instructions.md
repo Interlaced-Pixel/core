@@ -16,7 +16,7 @@ The "why" behind the header-only design is to simplify integration without linki
 - Compile commands are exported for IDE integration.
 
 ## Testing
-Unit tests are included and should achieve at least 95% code coverage.
+Unit tests are included and should achieve at least 90% code coverage.
 
 ## Developer Workflows
 - CI/CD via GitHub Actions in `.github/workflows/build-test.yml` (assumes standard build and test steps).
