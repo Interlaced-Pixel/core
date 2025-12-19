@@ -161,29 +161,29 @@ TEST_CASE("create_directory_single_level") {
 }
 
 TEST_CASE("error_handling") {
-    // Test reading non-existent file
-    std::string content = FileSystem::read_file("/nonexistent/path/file.txt");
+    // Test reading non-existent file (using relative path to avoid platform issues)
+    std::string content = FileSystem::read_file("nonexistent_file_xyz123.txt");
     CHECK(content.empty());
 
     // Test file_size on non-existent file
-    CHECK(FileSystem::file_size("/nonexistent/file.txt") == -1);
+    CHECK(FileSystem::file_size("nonexistent_file_xyz123.txt") == -1);
 
     // Test copy_file with invalid source
     std::string dir = make_temp_dir();
     REQUIRE(!dir.empty());
-    CHECK_FALSE(FileSystem::copy_file("/nonexistent/source.txt", dir + "/dest.txt"));
+    CHECK_FALSE(FileSystem::copy_file("nonexistent_source_xyz123.txt", dir + "/dest.txt"));
 
     // Test remove on non-existent file
     CHECK_FALSE(FileSystem::remove(dir + "/nonexistent.txt"));
 
     // Test exists on non-existent path
-    CHECK_FALSE(FileSystem::exists("/nonexistent/path"));
+    CHECK_FALSE(FileSystem::exists("nonexistent_path_xyz123"));
 
     // Test is_directory on non-existent path
-    CHECK_FALSE(FileSystem::is_directory("/nonexistent/path"));
+    CHECK_FALSE(FileSystem::is_directory("nonexistent_path_xyz123"));
 
     // Test is_regular_file on non-existent path
-    CHECK_FALSE(FileSystem::is_regular_file("/nonexistent/path"));
+    CHECK_FALSE(FileSystem::is_regular_file("nonexistent_path_xyz123"));
 
     remove_dir_tree(dir);
 }
