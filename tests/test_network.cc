@@ -8,8 +8,7 @@
 
 // Platform-specific socket utilities
 #ifdef _WIN32
-#include <winsock2.h>
-#include <ws2tcpip.h>
+// WinSock headers are included by interlaced_core/network.hpp
 #define close_socket(s) closesocket(s)
 #define SOCKOPT_CAST(opt) reinterpret_cast<const char*>(opt)
 #else
