@@ -140,8 +140,9 @@ TEST_CASE("parse_string_with_unicode_multibyte") {
     bool success = JSON::parse(R"("\u00E9")", result);
     CHECK(success == true);
     CHECK(result.is_string() == true);
-    // Unicode character é (U+00E9)
-    CHECK(result.as_string().size() == 2); // UTF-8 encoding
+    // Unicode character é (U+00E9) encodes to 2 bytes in UTF-8:
+    // 0xC3 0xA9, as it falls in the range U+0080 to U+07FF
+    CHECK(result.as_string().size() == 2);
 }
 
 TEST_CASE("parse_empty_array") {
