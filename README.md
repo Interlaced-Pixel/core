@@ -65,6 +65,8 @@ make coverage
 
 Coverage reports are generated in the `build/coverage` directory.
 
+Test mode for per-test isolation: set the environment variable `INTERLACED_TEST_MODE=1` to make network operations deterministic and offline-safe (e.g., DNS resolves to 127.0.0.1, reachability returns success, and downloads write a small placeholder file).
+
 **Note:** Test source files under `tests/` are excluded from the coverage report to avoid counting test code in coverage numbers.
 
 Note for VS Code: some coverage viewers (e.g., the "Coverage Gutters" extension) prefer workspace-relative paths in LCOV files. The Makefile now emits a workspace-relative LCOV at `build/coverage/lcov.relative.info` in addition to `build/coverage/lcov.info`. If your coverage extension cannot map lines to source files, run:
