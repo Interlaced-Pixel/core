@@ -551,20 +551,20 @@ static int run_test_http_server(const std::string &response, int &out_port, bool
     addr.sin_port = 0; // ephemeral
 
     if (bind(listenfd, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
-        close_socket(listenfd);
+        CLOSE_SOCKET(listenfd);
         return -1;
     }
 
     socklen_t len = sizeof(addr);
     if (getsockname(listenfd, (struct sockaddr*)&addr, &len) < 0) {
-        close_socket(listenfd);
+        CLOSE_SOCKET(listenfd);
         return -1;
     }
 
     out_port = ntohs(addr.sin_port);
 
     if (listen(listenfd, 1) < 0) {
-        close_socket(listenfd);
+        CLOSE_SOCKET(listenfd);
         return -1;
     }
 
@@ -584,9 +584,9 @@ static int run_test_http_server(const std::string &response, int &out_port, bool
             if (!body.empty()) {
                 send(conn, body.c_str(), body.size(), 0);
             }
-            close_socket(conn);
+            CLOSE_SOCKET(conn);
         }
-        close_socket(listenfd);
+        CLOSE_SOCKET(listenfd);
     }).detach();
 
     return 0;
@@ -664,9 +664,9 @@ TEST_CASE("download_file - server closes before send (triggers send failure)") {
     std::thread([listenfd]() {
         int conn = accept(listenfd,nullptr,nullptr);
         if (conn>=0) {
-            close_socket(conn);
+            CLOSE_SOCKET(conn);
         }
-        close_socket(listenfd);
+        CLOSE_SOCKET(listenfd);
     }).detach();
 
     std::string url = "http://127.0.0.1:" + std::to_string(port) + "/close";
@@ -720,9 +720,9 @@ TEST_CASE("download_file - split header and body across recv calls") {
             std::this_thread::sleep_for(std::chrono::milliseconds(200));
             std::string body = "DelayedBody\n";
             send(conn, body.c_str(), body.size(), 0);
-            close_socket(conn);
+            CLOSE_SOCKET(conn);
         }
-        close_socket(listenfd);
+        CLOSE_SOCKET(listenfd);
     }).detach();
 
     std::string url = "http://127.0.0.1:" + std::to_string(port) + "/split";
