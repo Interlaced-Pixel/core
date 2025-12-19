@@ -12,10 +12,16 @@ IS_GCC := $(if $(findstring gcc,$(CXX_VERSION)),1,$(IS_GCC))
 
 # Detect OS
 UNAME_S := $(shell uname -s 2>/dev/null)
-ifeq ($(OS),Windows_NT)
+# Default: assume non-Windows
+IS_WINDOWS := 0
+# Prefer uname-based detection when available (MSYS2/MinGW/Git Bash, etc.)
+ifneq (,$(findstring NT,$(UNAME_S)))
   IS_WINDOWS := 1
-else
-  IS_WINDOWS := 0
+else ifneq (,$(findstring MINGW,$(UNAME_S)))
+  IS_WINDOWS := 1
+else ifeq ($(OS),Windows_NT)
+  # Fallback for environments that set OS=Windows_NT
+  IS_WINDOWS := 1
 endif
 
 # Set coverage flags based on compiler
