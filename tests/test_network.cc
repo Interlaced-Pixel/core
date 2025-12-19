@@ -9,10 +9,10 @@
 // Platform-specific socket utilities
 #ifdef _WIN32
 // WinSock headers are included by interlaced_core/network.hpp
-#define close_socket(s) closesocket(s)
+#define CLOSE_SOCKET(s) closesocket(s)
 #define SOCKOPT_CAST(opt) reinterpret_cast<const char*>(opt)
 #else
-#define close_socket(s) close(s)
+#define CLOSE_SOCKET(s) close(s)
 #define SOCKOPT_CAST(opt) (opt)
 #endif
 
