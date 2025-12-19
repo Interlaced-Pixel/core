@@ -38,6 +38,16 @@ else
   COV_ENV := 
 endif
 
+# Detect if we need to link libstdc++fs for filesystem support
+# GCC < 9 requires explicit linking of stdc++fs
+LIBS :=
+ifeq ($(IS_GCC),1)
+  GCC_VERSION := $(shell $(CXX) -dumpversion 2>/dev/null | cut -d. -f1)
+  ifeq ($(shell test $(GCC_VERSION) -lt 9 2>/dev/null && echo 1),1)
+    LIBS += -lstdc++fs
+  endif
+endif
+
 TEST_DIR := tests
 BIN_DIR := build/tests
 COVERAGE_DIR := build/coverage
@@ -50,7 +60,7 @@ TEST_BIN := $(BIN_DIR)/interlaced_core_tests
 all: test
 
 $(TEST_BIN): $(SOURCES) third_party/doctest/doctest.h | $(BIN_DIR)
-	$(CXX) -std=$(STD) $(WARN) $(DBG) $(INCLUDES) $(COV_CFLAGS) $(SOURCES) -o $(TEST_BIN)
+	$(CXX) -std=$(STD) $(WARN) $(DBG) $(INCLUDES) $(COV_CFLAGS) $(SOURCES) -o $(TEST_BIN) $(LIBS)
 
 $(BIN_DIR):
 	@mkdir -p $(BIN_DIR)
@@ -83,12 +93,12 @@ ifeq ($(IS_CLANG),1)
 	@sed "s|SF:$(CURDIR)/|SF:|g" $(COVERAGE_DIR)/lcov.info > $(COVERAGE_DIR)/lcov.relative.info
 	@echo "Also created: $(COVERAGE_DIR)/lcov.relative.info (workspace-relative paths)";
 	@echo "Generating HTML -> $(COVERAGE_DIR)/html";
-	@$(LLVM_COV) show --ignore-filename-regex="(third_party/.*|tests/.*)" $(TEST_BIN) -instr-profile=$(COVERAGE_DIR)/coverage.profdata -format=html -output-dir=$(COVERAGE_DIR)/html -show-expansions -show-line-counts-or-regions
+	@$(LLVM_COV) show --ignore-filename-regex="(third_party/.*|tests/.*)" $(TEST_BIN) -instr-profile=$(COVERAGE_DIR)/coverage.profdata -format=html -output-dir=$(COVERAGE_DIR)/html -show-expansions -show-line-counts-or-regions -Xdemangler c++filt
 	@echo "Open: $(COVERAGE_DIR)/html/index.html"
 else ifeq ($(IS_GCC),1)
 	@mkdir -p $(COVERAGE_DIR)/html
 	@echo "GCC coverage: generating HTML with gcovr (if available)"
-	@which gcovr >/dev/null 2>&1 && gcovr --html-details $(COVERAGE_DIR)/html/index.html --exclude 'third_party/.*' --exclude 'tests/.*' || echo "gcovr not found; install it to generate GCC coverage reports"
+	@which gcovr >/dev/null 2>&1 && gcovr --html-details $(COVERAGE_DIR)/html/index.html --exclude 'third_party/.*' --exclude 'tests/.*' || echo "gcovr not found; install it to generate GCC coverage HTML."
 else
 	@echo "Coverage not supported for current compiler"
 endif
