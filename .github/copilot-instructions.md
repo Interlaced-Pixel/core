@@ -24,6 +24,7 @@ Concise contributor guidance for this header-only C++ utility library (filesyste
 ## Rules
 - Preserve header-only design — no compiled library artifacts in source.
 - Aim for high test coverage; tests must be deterministic and self-contained (no external services).
+ - Tests for a given module must live in a single file under `tests/` (e.g., `tests/test_network.cc`). Do not split a module's tests across multiple files.
 
 ## Notes for Copilot / Assistants
 - Focus on minimal, precise edits: fix root causes, not cosmetic workarounds.
