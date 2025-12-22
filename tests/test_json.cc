@@ -1,6 +1,7 @@
 #include "doctest.h"
 #include "json.hpp"
 #include <sstream>
+#include <limits>
 
 using namespace interlaced::core::json;
 using doctest::Approx;
@@ -111,4 +112,35 @@ TEST_CASE("validate_and_parse_or_throw") {
     CHECK_NOTHROW(JSON::parse_or_throw("[true,false]"););
 }
 
+TEST_CASE("number_conversion_fallbacks") {
+    // Non-numeric representation should return the provided fallback
+    JSON n = JSON::number("notanumber");
+    CHECK(Approx(n.as_number().to_double(3.14)) == 3.14);
+    CHECK(n.as_number().to_int64(42) == 42);
+
+    // Extremely large integer is clamped by `strtoll` to LLONG_MAX
+    JSON big = JSON::number("9999999999999999999999999999");
+    CHECK(big.as_number().to_int64(123) == std::numeric_limits<int64_t>::max());
+
+    // Fractional numbers are not integral
+    JSON frac = JSON::number("1.23");
+    CHECK_FALSE(frac.as_number().is_integral());
+}
+
+TEST_CASE("unicode_escape_error_cases") {
+    JSON v;
+    JsonError err;
+
+    // Invalid hex in unicode escape
+    CHECK_FALSE(JSON::parse("\"\\uZZZZ\"", v, &err));
+    CHECK(err.message.find("Invalid hex in unicode escape") != std::string::npos);
+
+    // High surrogate followed by invalid low surrogate
+    CHECK_FALSE(JSON::parse("\"\\uD800\\u0041\"", v, &err));
+    CHECK(err.message.find("Invalid low surrogate") != std::string::npos);
+
+    // Missing low surrogate after a high surrogate
+    CHECK_FALSE(JSON::parse("\"\\uD83D\"", v, &err));
+    CHECK(err.message.find("Missing low surrogate") != std::string::npos);
+}
 } // TEST_SUITE
