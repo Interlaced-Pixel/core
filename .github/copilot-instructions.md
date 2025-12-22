@@ -1,41 +1,31 @@
-# Interlaced Core Copilot Instructions
+# Interlaced Core — Copilot Instructions
 
-## Architecture Overview
-Interlaced Core is a header-only C++ library providing modular utilities for filesystem operations, JSON handling, logging, and networking. The library is structured as an interface library in CMake, with all headers in the `include/` directory. Key components include:
-- `filesystem.hpp`: File system utilities
-- `json.hpp`: JSON parsing and manipulation
-- `logging.hpp`: Logging mechanisms
-- `network.hpp`: Network-related functions
+## Purpose
+Concise contributor guidance for this header-only C++ utility library (filesystem, JSON, logging, network).
 
-The "why" behind the header-only design is to simplify integration without linking, allowing users to include only necessary headers.
+## Key Principles
+- Header-only: all public headers live in `include/` and should not require linking.
+- C++ standard: target C++17 only.
+- Minimal dependencies: only Doctest is allowed for tests; it is fetched via `tools/get_doctest.sh`.
 
-## Build System
-- Use Makefile with C++17 standard.
-- Root `Makefile` sets up the test build and coverage.
-- Build commands: `make test` to build, `make run-tests` to run, `make coverage` for coverage.
-- Compile commands are exported for IDE integration.
+## Build & Test
+- Build and test with the repository Makefile: `make test`, `make run-tests`, `make coverage`.
+- Tests live in `tests/` and use Doctest; coverage uses `gcov`/`lcov` and outputs under `build/coverage/`.
+- For local debug builds add `-O0 -g` to `CXXFLAGS` in the Makefile.
 
-## Testing
-Unit tests are included and should achieve at least 90% code coverage.
+## Conventions
+- Headers: `.hpp` in `include/`.
+- Tests: `.cc` in `tests/`.
+- Keep modules self-contained; prefer small, well-documented header APIs.
 
-## Developer Workflows
-- CI/CD via GitHub Actions in `.github/workflows/build-test.yml` (assumes standard build and test steps).
-- Debug builds: Add `-O0 -g` to CXXFLAGS in Makefile.
-- Dependencies: Doctest is fetched automatically; no other third-party libraries required.
+## CI / Workflow
+- CI uses GitHub Actions (see `.github/workflows/build-test.yml`) to run the Makefile targets.
 
-## Conventions and Patterns
-- Header files use `.hpp` extension, placed directly in `include/`.
-- Test files use `.cc` extension in `tests/`.
-- Makefile structure: Root Makefile for building tests and coverage.
-- Doctest is used for unit testing.
+## Rules
+- Preserve header-only design — no compiled library artifacts in source.
+- Aim for high test coverage; tests must be deterministic and self-contained (no external services).
 
-## Integration Points
-- Tests are implemented using doctest under `tests/` and linked via Makefile.
-- No cross-component communication beyond header includes; each module is self-contained.
-- Doctest is fetched automatically via `tools/get_doctest.sh`.
-
-## Rules & Restrictions
-- No third-party dependencies are required; the testing helpers are part of this repository.
-- Maintain header-only design; no compiled binaries.
-- Follow C++17 standard; no newer features.
-- Aim for at least 95% code coverage for unit tests.
+## Notes for Copilot / Assistants
+- Focus on minimal, precise edits: fix root causes, not cosmetic workarounds.
+- When editing files use the repository Makefile to run tests after changes.
+- Keep changes consistent with existing style and naming.
