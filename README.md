@@ -115,7 +115,7 @@ pixellib::core::filesystem::FileSystem::create_directories("path/to/dir");
 
 #### JSON Operations
 ```cpp
-#include "pixellib/json.hpp"
+#include "json.hpp"
 using pixellib::core::json::JSON;
 using pixellib::core::json::StringifyOptions;
 
