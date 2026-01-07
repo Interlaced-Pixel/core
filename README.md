@@ -147,7 +147,7 @@ Logger::error("An error occurred: {}", error_code);
 
 #### Network Operations
 ```cpp
-#include "pixellib/network.hpp"
+#include "network.hpp"
 
 // Resolve hostname to IP
 auto resolve_result = pixellib::core::network::Network::resolve_hostname("google.com");
