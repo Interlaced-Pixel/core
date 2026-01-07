@@ -19,20 +19,13 @@ TEST_CASE("filesystem") {
 
 TEST_CASE("logging") {
     std::ostringstream out, err;
-    
     interlaced::core::logging::Logger::set_output_streams(out, err);
-
-    
     interlaced::core::logging::Logger::set_level(interlaced::core::logging::LOG_WARNING);
-
     interlaced::core::logging::Logger::info("filtered out message");
     interlaced::core::logging::Logger::warning("visible warning");
-
     std::string out_str = out.str();
     CHECK(out_str.find("visible warning") != std::string::npos);
     CHECK(out_str.find("filtered out message") == std::string::npos);
-
-    
     interlaced::core::logging::Logger::set_output_streams(std::cout, std::cerr);
 }
 
@@ -44,9 +37,17 @@ TEST_CASE("json") {
 }
 
 TEST_CASE("network") {
-    
-    std::string response = interlaced::core::network::Network::http_get("http:
-    CHECK(response.find("HTTP response from http:
+    std::string response = interlaced::core::network::Network::http_get("http://example/test");
+    CHECK(response.find("HTTP response from http://example/test") != std::string::npos);
+
+    std::string r2 = interlaced::core::network::Network::http_post("http://example/post", "payload");
+    CHECK(r2.find("payload") != std::string::npos);
+
+    std::string r3 = interlaced::core::network::Network::https_get("https://example/test");
+    CHECK(r3.find("https://example/test") != std::string::npos);
+
+    std::string r4 = interlaced::core::network::Network::https_post("https://example/post", "p");
+    CHECK(r4.find("p") != std::string::npos);
 }
 
-} 
+}

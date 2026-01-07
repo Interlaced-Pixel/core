@@ -51,7 +51,6 @@ TEST_CASE("async_log_sink_queue_and_dropping") {
     async.flush();
 
     std::string s = out.str();
-    std::string s = out.str();
     CHECK(s.find("one") != std::string::npos);
     CHECK(s.find("two") != std::string::npos);
 
