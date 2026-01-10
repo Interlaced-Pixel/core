@@ -1,0 +1,4 @@
+{
+    "clangd.arguments": ["--background-index"],
+    "clangd.checkUpdates": true
+  }

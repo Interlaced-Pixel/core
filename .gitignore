@@ -1,8 +1,11 @@
+# Allowed
+!.vscode/launch.json
+!.vscode/settings.json
+!.vscode/tasks.json
+
 # Build directories
 build/
 build/_deps/
-third_party/
-third-party/
 coverage/
 cmake-build-*/
 _codeql_build_dir/
@@ -11,7 +14,6 @@ _codeql_detected_source_root
 # IDE files
 .zed/
 .cache/
-.vscode/
 .idea/
 *.swp
 *.swo
