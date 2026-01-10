@@ -1,9 +1,9 @@
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
-#include "doctest.h"
-#include "network.hpp"
-#include "filesystem.hpp"
-#include "logging.hpp"
-#include "json.hpp"
+#include "../include/doctest.h"
+#include "../include/network.hpp"
+#include "../include/filesystem.hpp"
+#include "../include/logging.hpp"
+#include "../include/json.hpp"
 
 
 TEST_SUITE("pixellib_sanity") {

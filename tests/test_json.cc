@@ -1,6 +1,5 @@
-#include "doctest.h"
-#include "json.hpp"
-#include <sstream>
+#include "../include/doctest.h"
+#include "../include/json.hpp"
 #include <limits>
 
 using namespace pixellib::core::json;

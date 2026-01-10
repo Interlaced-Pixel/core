@@ -1,8 +1,7 @@
-#include "doctest.h"
-#include "filesystem.hpp"
+#include "../include/doctest.h"
+#include "../include/filesystem.hpp"
 
 #include <algorithm>
-#include <cstdio>
 #include <cstdlib>
 #include <ctime>
 #include <string>

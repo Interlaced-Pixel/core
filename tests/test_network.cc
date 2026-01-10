@@ -1,11 +1,10 @@
-#include "doctest.h"
-#include "network.hpp"
+#include "../include/doctest.h"
+#include "../include/network.hpp"
 
 #include <cstdio>
 #include <cstdlib>
 #include <string>
 #include <vector>
-#include <algorithm>
 #ifndef _WIN32
 #include <unistd.h>
 #endif

@@ -1,9 +1,7 @@
-#include "doctest.h"
-#include "logging.hpp"
+#include "../include/doctest.h"
+#include "../include/logging.hpp"
 
 #include <sstream>
-#include <thread>
-#include <chrono>
 
 using namespace pixellib::core::logging;
 
