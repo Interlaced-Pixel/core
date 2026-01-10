@@ -1,44 +1,69 @@
-#include "../third-party/doctest/doctest.h"
 #include "../include/logging.hpp"
+#include "../third-party/doctest/doctest.h"
 
-#include <sstream>
-#include <thread>
 #include <chrono>
+#include <cstddef>
+#include <ctime>
 #include <filesystem>
-#include <system_error>
+#include <ios>
+#include <iostream>
+#include <memory>
+#include <ostream>
+#include <sstream>
 #include <stdexcept>
 #include <streambuf>
+#include <string>
+#include <system_error>
+#include <thread>
+#include <utility>
 
-// slow sink helper for testing async drop behavior
-class SlowSink : public pixellib::core::logging::LogSink {
-public:
+TEST_SUITE("logging_module")
+{
+  // slow sink helper for testing async drop behavior
+  class SlowSink : public pixellib::core::logging::LogSink
+  {
+  public:
     std::ostringstream &out_;
     std::chrono::milliseconds delay_;
     explicit SlowSink(std::ostringstream &out, std::chrono::milliseconds d = std::chrono::milliseconds(50)) : out_(out), delay_(d) {}
-    void write(const std::string &message) override {
-        std::this_thread::sleep_for(delay_);
-        out_ << message << std::endl;
+    void write(const std::string &message) override
+    {
+      std::this_thread::sleep_for(delay_);
+      out_ << message << std::endl;
     }
-};
+  };
 
-class ThrowingSinkStdException : public pixellib::core::logging::LogSink {
-public:
-    void write(const std::string &) override { throw std::runtime_error("boom"); }
-};
+  class ThrowingSinkStdException : public pixellib::core::logging::LogSink
+  {
+  public:
+    void write(const std::string &) override
+    {
+      throw std::runtime_error("boom");
+    }
+  };
 
-class ThrowingSinkNonStd : public pixellib::core::logging::LogSink {
-public:
-    void write(const std::string &) override { throw 1; }
-};
+  class ThrowingSinkNonStd : public pixellib::core::logging::LogSink
+  {
+  public:
+    void write(const std::string &) override
+    {
+      throw 1;
+    }
+  };
 
-class AlwaysFailBuf : public std::streambuf {
-protected:
-    int overflow(int) override { return traits_type::eof(); }
-};
+  class AlwaysFailBuf : public std::streambuf
+  {
+  protected:
+    int overflow(int) override
+    {
+      return traits_type::eof();
+    }
+  };
 
-using namespace pixellib::core::logging;
+  using namespace pixellib::core::logging;
 
-TEST_CASE("log_level_to_string_and_formatters") {
+  TEST_CASE("log_level_to_string_and_formatters")
+  {
     CHECK(std::string(log_level_to_string(LOG_TRACE)) == "TRACE");
     CHECK(std::string(log_level_to_string(LOG_ERROR)) == "ERROR");
 
@@ -51,17 +76,18 @@ TEST_CASE("log_level_to_string_and_formatters") {
 
     JSONLogFormatter jf;
     {
-        LogContext ctx;
-        ctx.add("k", "v");
-        std::string j = jf.format(LOG_INFO, "m", tm, nullptr, 0);
-        CHECK(j.find("\"level\":\"INFO\"") != std::string::npos);
-        CHECK(j.find("\"message\":\"m\"") != std::string::npos);
+      LogContext ctx;
+      ctx.add("k", "v");
+      std::string j = jf.format(LOG_INFO, "m", tm, nullptr, 0);
+      CHECK(j.find("\"level\":\"INFO\"") != std::string::npos);
+      CHECK(j.find("\"message\":\"m\"") != std::string::npos);
     }
 
     CHECK(std::string(log_level_to_string(static_cast<LogLevel>(999))) == "UNKNOWN");
-}
+  }
 
-TEST_CASE("default_formatter_timestamp_variants") {
+  TEST_CASE("default_formatter_timestamp_variants")
+  {
     std::tm tm{};
     DefaultLogFormatter df_std(TimestampFormat::STANDARD, "");
     DefaultLogFormatter df_iso(TimestampFormat::ISO8601, "");
@@ -72,9 +98,10 @@ TEST_CASE("default_formatter_timestamp_variants") {
     CHECK(s1.find("[INFO]") != std::string::npos);
     CHECK(s2.find("[INFO]") != std::string::npos);
     CHECK(s3.find("[INFO]") != std::string::npos);
-}
+  }
 
-TEST_CASE("json_formatter_escaping_more_cases") {
+  TEST_CASE("json_formatter_escaping_more_cases")
+  {
     JSONLogFormatter jf;
     std::tm tm{};
     std::string msg = std::string("tab\tcr\rbs\\");
@@ -82,9 +109,10 @@ TEST_CASE("json_formatter_escaping_more_cases") {
     CHECK(j.find("\\t") != std::string::npos);
     CHECK(j.find("\\r") != std::string::npos);
     CHECK(j.find("\\\\") != std::string::npos);
-}
+  }
 
-TEST_CASE("stream_sink_and_stream_state_handling") {
+  TEST_CASE("stream_sink_and_stream_state_handling")
+  {
     std::ostringstream out;
     StreamSink sink(out);
     sink.write("hello");
@@ -92,9 +120,10 @@ TEST_CASE("stream_sink_and_stream_state_handling") {
 
     out.setstate(std::ios::badbit);
     sink.write("world");
-}
+  }
 
-TEST_CASE("async_log_sink_queue_and_dropping") {
+  TEST_CASE("async_log_sink_queue_and_dropping")
+  {
     std::ostringstream out;
     auto inner = std::make_unique<StreamSink>(out);
     AsyncLogSink async(std::move(inner), 2, AsyncLogSink::DropPolicy::DROP_NEWEST);
@@ -109,9 +138,10 @@ TEST_CASE("async_log_sink_queue_and_dropping") {
     CHECK(s.find("two") != std::string::npos);
 
     async.shutdown();
-}
+  }
 
-TEST_CASE("logger_output_and_configuration") {
+  TEST_CASE("logger_output_and_configuration")
+  {
     std::ostringstream out, err;
     Logger::set_output_streams(out, err);
     Logger::set_level(LOG_INFO);
@@ -127,17 +157,18 @@ TEST_CASE("logger_output_and_configuration") {
 
     Logger::info("hello {}", "world");
     {
-        bool found = out.str().find("helloworld") != std::string::npos || out.str().find("hello world") != std::string::npos;
-        CHECK(found);
+      bool found = out.str().find("helloworld") != std::string::npos || out.str().find("hello world") != std::string::npos;
+      CHECK(found);
     }
 
     Logger::info("msg", std::string("k"), 123);
     CHECK(out.str().find("k=123") != std::string::npos);
 
     Logger::set_output_streams(std::cout, std::cerr);
-}
+  }
 
-TEST_CASE("default_formatter_filename_extraction_and_context") {
+  TEST_CASE("default_formatter_filename_extraction_and_context")
+  {
     DefaultLogFormatter df(TimestampFormat::NONE, "");
     std::tm tm{};
     std::string out = df.format(LOG_INFO, "m", tm, "/path/to/myfile.cpp", 123);
@@ -146,14 +177,15 @@ TEST_CASE("default_formatter_filename_extraction_and_context") {
 
     // Test that context is included
     {
-        pixellib::core::logging::LogContext ctx;
-        ctx.add("user", "u1");
-        std::string out2 = df.format(LOG_INFO, "msg", tm, nullptr, 0);
-        CHECK(out2.find("user=u1") != std::string::npos);
+      pixellib::core::logging::LogContext ctx;
+      ctx.add("user", "u1");
+      std::string out2 = df.format(LOG_INFO, "msg", tm, nullptr, 0);
+      CHECK(out2.find("user=u1") != std::string::npos);
     }
-}
+  }
 
-TEST_CASE("logger_with_sinks_and_category_config") {
+  TEST_CASE("logger_with_sinks_and_category_config")
+  {
     std::ostringstream out;
     // Build a global config with a stream sink
     pixellib::core::logging::Logger::LoggerConfigBuilder b;
@@ -171,9 +203,10 @@ TEST_CASE("logger_with_sinks_and_category_config") {
     // Reset global logging to defaults
     pixellib::core::logging::Logger::set_file_logging(nullptr);
     pixellib::core::logging::Logger::set_output_streams(std::cout, std::cerr);
-}
+  }
 
-TEST_CASE("per_category_registry_and_level_filtering") {
+  TEST_CASE("per_category_registry_and_level_filtering")
+  {
     std::ostringstream out;
     pixellib::core::logging::Logger::LoggerConfigBuilder b;
     b.set_level(LOG_ERROR).add_stream_sink(out);
@@ -187,19 +220,21 @@ TEST_CASE("per_category_registry_and_level_filtering") {
     std::string s = out.str();
     CHECK(s.find("should-be-filtered") == std::string::npos);
     CHECK(s.find("should-show") != std::string::npos);
-}
+  }
 
-TEST_CASE("json_formatter_escaping") {
+  TEST_CASE("json_formatter_escaping")
+  {
     JSONLogFormatter jf;
     std::tm tm{};
     std::string msg = "quote\" backslash\\ newline\n";
     std::string j = jf.format(LOG_INFO, msg, tm, nullptr, 0);
     CHECK(j.find("\\\"") != std::string::npos); // escaped quote
     CHECK(j.find("\\\\") != std::string::npos); // escaped backslash
-    CHECK(j.find("\\n") != std::string::npos); // escaped newline
-}
+    CHECK(j.find("\\n") != std::string::npos);  // escaped newline
+  }
 
-TEST_CASE("async_drop_oldest_and_metrics") {
+  TEST_CASE("async_drop_oldest_and_metrics")
+  {
     std::ostringstream out;
     // slow inner sink to force queue buildup
     auto slow = std::make_unique<SlowSink>(out, std::chrono::milliseconds(40));
@@ -208,8 +243,9 @@ TEST_CASE("async_drop_oldest_and_metrics") {
     pixellib::core::logging::Logger::configure(b.build());
 
     // Rapidly emit many messages
-    for (int i = 0; i < 10; ++i) {
-        pixellib::core::logging::Logger::info(std::string("m") + std::to_string(i));
+    for (int i = 0; i < 10; ++i)
+    {
+      pixellib::core::logging::Logger::info(std::string("m") + std::to_string(i));
     }
 
     // Allow some time for worker to consume
@@ -223,9 +259,10 @@ TEST_CASE("async_drop_oldest_and_metrics") {
     // Reset global logging to defaults
     pixellib::core::logging::Logger::set_file_logging(nullptr);
     pixellib::core::logging::Logger::set_output_streams(std::cout, std::cerr);
-}
+  }
 
-TEST_CASE("test_helpers_clear_and_error_messages") {
+  TEST_CASE("test_helpers_clear_and_error_messages")
+  {
     std::ostringstream s;
     s.setstate(std::ios::badbit);
     pixellib::core::logging::test_force_clear_stream(s);
@@ -233,16 +270,19 @@ TEST_CASE("test_helpers_clear_and_error_messages") {
 
     // test_force_logging_error_messages writes to cerr; just call to cover code paths
     pixellib::core::logging::test_force_logging_error_messages("err-msg");
-}
+  }
 
-TEST_CASE("rotating_file_logger_size_and_time_rotation") {
+  TEST_CASE("rotating_file_logger_size_and_time_rotation")
+  {
     namespace fs = std::filesystem;
     std::string base = "build/tmp/testlog";
     fs::create_directories("build/tmp");
     // clean up any previous files
-    for (int i = 0; i < 5; ++i) {
-        std::string p = base + (i==0?"":("."+std::to_string(i)));
-        if (fs::exists(p)) fs::remove(p);
+    for (int i = 0; i < 5; ++i)
+    {
+      std::string p = base + (i == 0 ? "" : ("." + std::to_string(i)));
+      if (fs::exists(p))
+        fs::remove(p);
     }
 
     // Size-based rotation: very small max size so rotation happens quickly
@@ -263,9 +303,11 @@ TEST_CASE("rotating_file_logger_size_and_time_rotation") {
 
     // Time-based rotation with zero interval triggers rotation on write
     std::string tbase = "build/tmp/testlog_time";
-    for (int i = 0; i < 3; ++i) {
-        std::string p = tbase + (i==0?"":("."+std::to_string(i)));
-        if (fs::exists(p)) fs::remove(p);
+    for (int i = 0; i < 3; ++i)
+    {
+      std::string p = tbase + (i == 0 ? "" : ("." + std::to_string(i)));
+      if (fs::exists(p))
+        fs::remove(p);
     }
     pixellib::core::logging::RotatingFileLogger rft(tbase, std::chrono::hours(0), 2);
     rft.write("t1");
@@ -276,33 +318,40 @@ TEST_CASE("rotating_file_logger_size_and_time_rotation") {
     CHECK(fs::exists(tbase + ".1"));
 
     // cleanup
-    for (int i = 0; i < 5; ++i) {
-        std::string p = base + (i==0?"":("."+std::to_string(i)));
-        if (fs::exists(p)) fs::remove(p);
+    for (int i = 0; i < 5; ++i)
+    {
+      std::string p = base + (i == 0 ? "" : ("." + std::to_string(i)));
+      if (fs::exists(p))
+        fs::remove(p);
     }
-    for (int i = 0; i < 5; ++i) {
-        std::string p = tbase + (i==0?"":("."+std::to_string(i)));
-        if (fs::exists(p)) fs::remove(p);
+    for (int i = 0; i < 5; ++i)
+    {
+      std::string p = tbase + (i == 0 ? "" : ("." + std::to_string(i)));
+      if (fs::exists(p))
+        fs::remove(p);
     }
-}
+  }
 
-TEST_CASE("rotating_file_logger_open_failure_falls_back") {
+  TEST_CASE("rotating_file_logger_open_failure_falls_back")
+  {
     // Opening a directory as a file should fail; write() should fallback to cerr path.
     namespace fs = std::filesystem;
     fs::create_directories("build/tmp");
     pixellib::core::logging::RotatingFileLogger rf("build/tmp", 10, 1);
     rf.write("should-fallback");
-}
+  }
 
-TEST_CASE("async_inner_sink_exception_swallowed") {
+  TEST_CASE("async_inner_sink_exception_swallowed")
+  {
     auto inner = std::make_unique<ThrowingSinkNonStd>();
     pixellib::core::logging::AsyncLogSink async(std::move(inner), 8, pixellib::core::logging::AsyncLogSink::DropPolicy::DROP_NEWEST);
     async.write("x");
     async.flush();
     async.shutdown();
-}
+  }
 
-TEST_CASE("macros_and_logger_overloads_and_stream_clear") {
+  TEST_CASE("macros_and_logger_overloads_and_stream_clear")
+  {
     std::ostringstream out, err;
     Logger::set_output_streams(out, err);
     // Macros should invoke logger with file/line
@@ -324,9 +373,10 @@ TEST_CASE("macros_and_logger_overloads_and_stream_clear") {
     CHECK(ostr.good());
 
     Logger::set_output_streams(std::cout, std::cerr);
-}
+  }
 
-TEST_CASE("log_context_storage_get_and_remove") {
+  TEST_CASE("log_context_storage_get_and_remove")
+  {
     pixellib::core::logging::LogContextStorage::set("k1", "v1");
     CHECK(pixellib::core::logging::LogContextStorage::get("k1") == "v1");
     pixellib::core::logging::LogContextStorage::remove("k1");
@@ -337,9 +387,10 @@ TEST_CASE("log_context_storage_get_and_remove") {
     CHECK(pixellib::core::logging::LogContextStorage::get("k2") == "v2");
     ctx.remove("k2");
     CHECK(pixellib::core::logging::LogContextStorage::get("k2") == "");
-}
+  }
 
-TEST_CASE("logger_string_overloads_and_file_line_overloads") {
+  TEST_CASE("logger_string_overloads_and_file_line_overloads")
+  {
     std::ostringstream out, err;
     Logger::set_output_streams(out, err);
     Logger::set_level(LOG_TRACE);
@@ -358,9 +409,10 @@ TEST_CASE("logger_string_overloads_and_file_line_overloads") {
     Logger::fatal(std::string("fa-sfl"), "f.cc", 6);
 
     Logger::set_output_streams(std::cout, std::cerr);
-}
+  }
 
-TEST_CASE("logger_set_formatter_and_formatter_branches") {
+  TEST_CASE("logger_set_formatter_and_formatter_branches")
+  {
     std::ostringstream out, err;
     Logger::set_output_streams(out, err);
     // disable sinks but keep output streams
@@ -379,9 +431,10 @@ TEST_CASE("logger_set_formatter_and_formatter_branches") {
     Logger::LoggerConfig empty2;
     Logger::configure(std::move(empty2));
     Logger::set_output_streams(std::cout, std::cerr);
-}
+  }
 
-TEST_CASE("logger_sink_exception_clears_stream") {
+  TEST_CASE("logger_sink_exception_clears_stream")
+  {
     AlwaysFailBuf buf;
     std::ostream failing(&buf);
     // Set exceptions while stream state is good.
@@ -396,9 +449,10 @@ TEST_CASE("logger_sink_exception_clears_stream") {
     failing.exceptions(std::ios::goodbit);
 
     Logger::set_output_streams(std::cout, std::cerr);
-}
+  }
 
-TEST_CASE("logger_output_stream_exception_catch_blocks") {
+  TEST_CASE("logger_output_stream_exception_catch_blocks")
+  {
     AlwaysFailBuf out_buf;
     AlwaysFailBuf err_buf;
     std::ostream out(&out_buf);
@@ -411,16 +465,18 @@ TEST_CASE("logger_output_stream_exception_catch_blocks") {
     Logger::LoggerConfig empty;
     Logger::configure(std::move(empty));
 
-    Logger::log(LOG_INFO, "x");                     // hits catch(std::exception&) in log()
-    Logger::log(LOG_INFO, "x", "f.cc", 1);          // hits catch(std::exception&) in log(file,line)
-    Logger::log(LOG_INFO, std::string("x"), "k", 1, "y", 2); // hits catch(std::exception&) in structured log
+    Logger::log(LOG_INFO, "x");            // hits catch(std::exception&) in log()
+    Logger::log(LOG_INFO, "x", "f.cc", 1); // hits catch(std::exception&) in log(file,line)
+    Logger::log(LOG_INFO, std::string("x"), "k", 1, "y",
+                2); // hits catch(std::exception&) in structured log
 
     Logger::set_output_streams(std::cout, std::cerr);
     out.exceptions(std::ios::goodbit);
     err.exceptions(std::ios::goodbit);
-}
+  }
 
-TEST_CASE("structured_log_early_exit_and_sink_exception_paths") {
+  TEST_CASE("structured_log_early_exit_and_sink_exception_paths")
+  {
     // Ensure formatter is cleared so the structured-log sink paths are used.
     Logger::LoggerConfig empty;
     Logger::configure(std::move(empty));
@@ -440,9 +496,10 @@ TEST_CASE("structured_log_early_exit_and_sink_exception_paths") {
     Logger::log(LOG_INFO, std::string("hit-nonstd"), "k", 1, "y", 2);
 
     Logger::set_output_streams(std::cout, std::cerr);
-}
+  }
 
-TEST_CASE("category_logger_formatter_and_exception_paths") {
+  TEST_CASE("category_logger_formatter_and_exception_paths")
+  {
     std::ostringstream out, err;
     Logger::set_output_streams(out, err);
     // global formatter path (CategoryLogger uses formatter if cfg has none)
@@ -468,9 +525,10 @@ TEST_CASE("category_logger_formatter_and_exception_paths") {
     Logger::LoggerConfig empty2;
     Logger::configure(std::move(empty2)); // clears formatter
     Logger::set_output_streams(std::cout, std::cerr);
-}
+  }
 
-TEST_CASE("logger_add_sink_and_sink_exception_paths") {
+  TEST_CASE("logger_add_sink_and_sink_exception_paths")
+  {
     std::ostringstream out, err;
     Logger::set_output_streams(out, err);
     // clear sinks but preserve output_stream pointers
@@ -491,9 +549,10 @@ TEST_CASE("logger_add_sink_and_sink_exception_paths") {
     Logger::log(LOG_INFO, "will-hit-nonstd-exception");
 
     Logger::set_output_streams(std::cout, std::cerr);
-}
+  }
 
-TEST_CASE("logger_output_stream_path_and_exception_handling") {
+  TEST_CASE("logger_output_stream_path_and_exception_handling")
+  {
     std::ostringstream out, err;
     Logger::set_output_streams(out, err);
     // disable sinks but keep output streams set
@@ -510,9 +569,10 @@ TEST_CASE("logger_output_stream_path_and_exception_handling") {
     CHECK(out.good());
 
     Logger::set_output_streams(std::cout, std::cerr);
-}
+  }
 
-TEST_CASE("category_logger_fallback_and_exception_paths") {
+  TEST_CASE("category_logger_fallback_and_exception_paths")
+  {
     // Ensure global sinks empty so category logger falls back to output streams.
     Logger::LoggerConfig empty;
     Logger::configure(std::move(empty));
@@ -531,9 +591,10 @@ TEST_CASE("category_logger_fallback_and_exception_paths") {
     cat2.info("x");
 
     Logger::set_output_streams(std::cout, std::cerr);
-}
+  }
 
-TEST_CASE("format_and_log_with_format_string_branches") {
+  TEST_CASE("format_and_log_with_format_string_branches")
+  {
     std::ostringstream out, err;
     Logger::set_output_streams(out, err);
     Logger::set_level(LOG_TRACE);
@@ -557,9 +618,10 @@ TEST_CASE("format_and_log_with_format_string_branches") {
     Logger::info("noargs-no-placeholders");
 
     Logger::set_output_streams(std::cout, std::cerr);
-}
+  }
 
-TEST_CASE("logger_file_logging_overloads_and_async_queue_size") {
+  TEST_CASE("logger_file_logging_overloads_and_async_queue_size")
+  {
     namespace fs = std::filesystem;
     fs::create_directories("build/tmp");
 
@@ -582,7 +644,8 @@ TEST_CASE("logger_file_logging_overloads_and_async_queue_size") {
     Logger::LoggerConfigBuilder b;
     b.set_level(LOG_INFO).add_async_stream_sink(out, 16, AsyncLogSink::DropPolicy::DROP_NEWEST);
     Logger::configure(b.build());
-    for (int i = 0; i < 10; ++i) Logger::info(std::string("q") + std::to_string(i));
+    for (int i = 0; i < 10; ++i)
+      Logger::info(std::string("q") + std::to_string(i));
     CHECK(Logger::get_async_queue_size() >= 0);
     Logger::async_flush();
     Logger::async_shutdown();
@@ -590,15 +653,17 @@ TEST_CASE("logger_file_logging_overloads_and_async_queue_size") {
     Logger::set_output_streams(std::cout, std::cerr);
     fs::remove(f1, ec);
     fs::remove(f2, ec);
-}
+  }
 
-TEST_CASE("async_block_policy_and_queue_metrics") {
+  TEST_CASE("async_block_policy_and_queue_metrics")
+  {
     std::ostringstream out;
     auto slow = std::make_unique<SlowSink>(out, std::chrono::milliseconds(80));
     auto async = pixellib::core::logging::AsyncLogSink(std::move(slow), 1, pixellib::core::logging::AsyncLogSink::DropPolicy::BLOCK, std::chrono::milliseconds(5));
 
     // fill queue quickly; some writes may time out and be counted as dropped
-    for (int i = 0; i < 5; ++i) async.write(std::string("b") + std::to_string(i));
+    for (int i = 0; i < 5; ++i)
+      async.write(std::string("b") + std::to_string(i));
 
     std::this_thread::sleep_for(std::chrono::milliseconds(300));
     size_t dropped = async.dropped_count();
@@ -606,14 +671,20 @@ TEST_CASE("async_block_policy_and_queue_metrics") {
     size_t qsz = async.queue_size();
     CHECK(qsz >= 0);
     async.shutdown();
-}
+  }
 
-TEST_CASE("config_builder_file_and_async_variants_and_registry") {
+  TEST_CASE("config_builder_file_and_async_variants_and_registry")
+  {
     std::ostringstream out;
     // add file sink using builder (writes to build/tmp/testbuilder.log)
     std::string fname = "build/tmp/testbuilder.log";
     pixellib::core::logging::Logger::LoggerConfigBuilder b;
-    b.set_level(LOG_DEBUG).add_stream_sink(out).add_async_stream_sink(out).add_file_sink(fname, 1024, 2).add_async_file_sink("build/tmp/testbuilder_async.log").set_formatter(std::make_unique<JSONLogFormatter>());
+    b.set_level(LOG_DEBUG)
+        .add_stream_sink(out)
+        .add_async_stream_sink(out)
+        .add_file_sink(fname, 1024, 2)
+        .add_async_file_sink("build/tmp/testbuilder_async.log")
+        .set_formatter(std::make_unique<JSONLogFormatter>());
     auto cfg = b.build();
     // register under a name
     pixellib::core::logging::Logger::LoggerRegistry::set_config("builderTest", std::move(cfg));
@@ -623,4 +694,5 @@ TEST_CASE("config_builder_file_and_async_variants_and_registry") {
     std::error_code ec;
     std::filesystem::remove(fname, ec);
     std::filesystem::remove("build/tmp/testbuilder_async.log", ec);
+  }
 }
