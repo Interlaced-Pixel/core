@@ -2,6 +2,20 @@
 #include "../include/logging.hpp"
 
 #include <sstream>
+#include <thread>
+#include <chrono>
+
+// slow sink helper for testing async drop behavior
+class SlowSink : public pixellib::core::logging::LogSink {
+public:
+    std::ostringstream &out_;
+    std::chrono::milliseconds delay_;
+    explicit SlowSink(std::ostringstream &out, std::chrono::milliseconds d = std::chrono::milliseconds(50)) : out_(out), delay_(d) {}
+    void write(const std::string &message) override {
+        std::this_thread::sleep_for(delay_);
+        out_ << message << std::endl;
+    }
+};
 
 using namespace pixellib::core::logging;
 
