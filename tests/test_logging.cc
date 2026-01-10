@@ -1,4 +1,4 @@
-#include "test_framework.hpp"
+#include "../third-party/doctest/doctest.h"
 #include "../include/logging.hpp"
 
 #include <sstream>
@@ -37,8 +37,6 @@ protected:
 };
 
 using namespace pixellib::core::logging;
-
-TEST_SUITE("logging_module") {
 
 TEST_CASE("log_level_to_string_and_formatters") {
     CHECK(std::string(log_level_to_string(LOG_TRACE)) == "TRACE");
@@ -625,6 +623,4 @@ TEST_CASE("config_builder_file_and_async_variants_and_registry") {
     std::error_code ec;
     std::filesystem::remove(fname, ec);
     std::filesystem::remove("build/tmp/testbuilder_async.log", ec);
-}
-
 }

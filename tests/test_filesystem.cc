@@ -1,4 +1,4 @@
-#include "test_framework.hpp"
+#include "../third-party/doctest/doctest.h"
 #include "../include/filesystem.hpp"
 
 #include <algorithm>
@@ -7,7 +7,9 @@
 #include <string>
 #include <vector>
 
-using namespace pixellib::core::filesystem;
+TEST_SUITE("filesystem") {
+ 
+    using namespace pixellib::core::filesystem;
 
 static std::string make_temp_dir() {
     std::string base = FileSystem::temp_directory_path();
@@ -49,8 +51,6 @@ static void remove_dir_tree(const std::string &path) {
     }
     FileSystem::remove(path);
 }
-
-TEST_SUITE("filesystem_module") {
 
 TEST_CASE("read_write_and_exists") {
     std::string dir = make_temp_dir();

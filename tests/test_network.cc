@@ -1,15 +1,24 @@
-#include "test_framework.hpp"
+#include "../third-party/doctest/doctest.h"
 #include "../include/network.hpp"
 
+#include <_stdio.h>
+#include <_stdlib.h>
+#include <arpa/inet.h>
+#include <cerrno>
 #include <cstdio>
 #include <cstdlib>
+#include <functional>
+#include <netinet/in.h>
 #include <string>
+#include <sys/socket.h>
 #include <vector>
 #ifndef _WIN32
 #include <unistd.h>
 #endif
 
-using namespace pixellib::core::network;
+TEST_SUITE("network") {
+
+  using namespace pixellib::core::network;
 
 namespace pixellib {
 namespace core {
@@ -103,8 +112,6 @@ void Network::test_mark_is_host_reachable_branches() {
 }
 }
 }
-
-TEST_SUITE("network_module") {
 
 TEST_CASE("ipv4_validation") {
   CHECK(Network::is_valid_ipv4("192.168.1.1") == true);
@@ -262,4 +269,5 @@ TEST_CASE("download_force_failure_helpers_and_branch_marks") {
   Network::test_mark_download_branches();
   Network::test_mark_is_host_reachable_branches();
 }
+
 }

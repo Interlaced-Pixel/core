@@ -1,11 +1,8 @@
-#include "test_framework.hpp"
+#include "../third-party/doctest/doctest.h"
 #include "../include/json.hpp"
 #include <limits>
 
 using namespace pixellib::core::json;
-using pixellib_test::Approx;
-
-TEST_SUITE("json_module") {
 
 TEST_CASE("parse_literals_and_types") {
     JSON v;
@@ -27,16 +24,16 @@ TEST_CASE("parse_numbers_and_number_helpers") {
     CHECK(v.is_number());
     CHECK(v.as_number().is_integral());
     CHECK(v.as_number().to_int64() == 42);
-    CHECK(Approx(v.as_number().to_double(0.0)) == 42.0);
+    CHECK(v.as_number().to_double(0.0) == 42.0);
 
     CHECK(JSON::parse("-3.14", v));
     CHECK(v.is_number());
     CHECK_FALSE(v.as_number().is_integral());
-    CHECK(Approx(v.as_number().to_double()) == -3.14);
+    CHECK(v.as_number().to_double() == -3.14);
 
     CHECK(JSON::parse("1e3", v));
     CHECK(v.is_number());
-    CHECK(Approx(v.as_number().to_double()) == 1000.0);
+    CHECK(v.as_number().to_double() == 1000.0);
 }
 
 TEST_CASE("parse_strings_and_escapes") {
@@ -114,7 +111,7 @@ TEST_CASE("validate_and_parse_or_throw") {
 TEST_CASE("number_conversion_fallbacks") {
     
     JSON n = JSON::number("notanumber");
-    CHECK(Approx(n.as_number().to_double(3.14)) == 3.14);
+    CHECK(n.as_number().to_double(3.14) == 3.14);
     CHECK(n.as_number().to_int64(42) == 42);
 
     
@@ -141,5 +138,4 @@ TEST_CASE("unicode_escape_error_cases") {
     
     CHECK_FALSE(JSON::parse("\"\\uD83D\"", v, &err));
     CHECK(err.message.find("Missing low surrogate") != std::string::npos);
-}
 } 
