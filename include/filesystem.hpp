@@ -8,6 +8,7 @@
 #include <vector>
 #include <sys/stat.h>
 #include <ctime>
+#include <limits.h>
 
 #ifdef _WIN32
 #include <direct.h>
