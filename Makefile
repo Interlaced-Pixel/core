@@ -2,7 +2,7 @@ CXX ?= clang++
 STD ?= c++17
 WARN := -Wall -Wextra -Wpedantic
 DBG := -O0 -g
-INCLUDES := -Iinclude -Ithird_party/doctest
+INCLUDES := -Iinclude -Itests
 
 # Detect compiler type
 CXX_VERSION := $(shell $(CXX) --version 2>/dev/null)
@@ -76,19 +76,19 @@ TEST_BIN := $(BIN_DIR)/pixellib_tests
 
 all: clean test coverage doctest
 
-$(TEST_BIN): $(SOURCES) third_party/doctest/doctest.h | $(BIN_DIR)
+$(TEST_BIN): $(SOURCES) | $(BIN_DIR)
 	$(CXX) -std=$(STD) $(WARN) $(DBG) $(INCLUDES) $(COV_CFLAGS) $(SOURCES) -o $(TEST_BIN) $(LIBS)
 
 $(BIN_DIR):
 	@mkdir -p $(BIN_DIR)
 
-third_party/doctest/doctest.h:
-	@mkdir -p third_party/doctest
+third-party/doctest/doctest.h:
+	@mkdir -p third-party/doctest
 	@./tools/get_doctest.sh
 
 # Explicit target to fetch doctest header
-doctest: third_party/doctest/doctest.h
-	@echo "doctest header present at third_party/doctest/doctest.h"
+doctest: third-party/doctest/doctest.h
+	@echo "doctest header present at third-party/doctest/doctest.h"
 
 test: $(TEST_BIN)
 	@echo "Built test binary: $(TEST_BIN)"
@@ -106,16 +106,16 @@ ifeq ($(IS_CLANG),1)
 	@echo "Merging raw profiles -> $(COVERAGE_DIR)/coverage.profdata";
 	@$(LLVM_PROFDATA) merge -sparse $(BIN_DIR)/*.profraw -o $(COVERAGE_DIR)/coverage.profdata
 	@echo "Exporting lcov -> $(COVERAGE_DIR)/lcov.info";
-	@$(LLVM_COV) export --format=lcov --ignore-filename-regex="(third_party/.*|tests/.*)" $(TEST_BIN) -instr-profile=$(COVERAGE_DIR)/coverage.profdata > $(COVERAGE_DIR)/lcov.info
+	@$(LLVM_COV) export --format=lcov --ignore-filename-regex="(third-party/.*|tests/.*)" $(TEST_BIN) -instr-profile=$(COVERAGE_DIR)/coverage.profdata > $(COVERAGE_DIR)/lcov.info
 	@sed "s|SF:$(CURDIR)/|SF:|g" $(COVERAGE_DIR)/lcov.info > $(COVERAGE_DIR)/lcov.relative.info
 	@echo "Also created: $(COVERAGE_DIR)/lcov.relative.info (workspace-relative paths)";
 	@echo "Generating HTML -> $(COVERAGE_DIR)/html";
-	@$(LLVM_COV) show --ignore-filename-regex="(third_party/.*|tests/.*)" $(TEST_BIN) -instr-profile=$(COVERAGE_DIR)/coverage.profdata -format=html -output-dir=$(COVERAGE_DIR)/html -show-expansions -show-line-counts-or-regions -Xdemangler c++filt
+	@$(LLVM_COV) show --ignore-filename-regex="(third-party/.*|tests/.*)" $(TEST_BIN) -instr-profile=$(COVERAGE_DIR)/coverage.profdata -format=html -output-dir=$(COVERAGE_DIR)/html -show-expansions -show-line-counts-or-regions -Xdemangler c++filt
 	@echo "Open: $(COVERAGE_DIR)/html/index.html"
 else ifeq ($(IS_GCC),1)
 	@mkdir -p $(COVERAGE_DIR)/html
 	@echo "GCC coverage: generating HTML with gcovr (if available)"
-	@which gcovr >/dev/null 2>&1 && gcovr --html-details $(COVERAGE_DIR)/html/index.html --exclude 'third_party/.*' --exclude 'tests/.*' || echo "gcovr not found; install it to generate GCC coverage HTML."
+	@which gcovr >/dev/null 2>&1 && gcovr --html-details $(COVERAGE_DIR)/html/index.html --exclude 'third-party/.*' --exclude 'tests/.*' || echo "gcovr not found; install it to generate GCC coverage HTML."
 else
 	@echo "Coverage not supported for current compiler"
 endif

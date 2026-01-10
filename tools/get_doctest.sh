@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Fetches doctest single-header into third_party/doctest
+# Fetches doctest single-header into third-party/doctest
 # - Pins to a specific tag for reproducibility
 # - Uses curl or wget with basic retries
 # - Skips download if already present unless --force is passed
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-DEST_DIR="$ROOT_DIR/third_party/doctest"
+DEST_DIR="$ROOT_DIR/third-party/doctest"
 
 # Pin version for stability (update as needed)
 DOCTEST_TAG="v2.4.11"
@@ -34,7 +34,7 @@ download() {
 mkdir -p "$DEST_DIR"
 
 if [[ $FORCE -eq 0 && -f "$DEST_DIR/doctest.h" ]]; then
-	echo "doctest already present at third_party/doctest/doctest.h (use --force to re-download)"
+	echo "doctest already present at third-party/doctest/doctest.h (use --force to re-download)"
 	exit 0
 fi
 
@@ -49,4 +49,4 @@ tmp_license=$(mktemp)
 download "$LICENSE_URL" "$tmp_license"
 install -m 0644 "$tmp_license" "$DEST_DIR/LICENSE.txt"
 
-echo "doctest ${DOCTEST_TAG} ready at third_party/doctest/doctest.h"
+echo "doctest ${DOCTEST_TAG} ready at third-party/doctest/doctest.h"

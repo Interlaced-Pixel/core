@@ -2,6 +2,7 @@
 build/
 build/_deps/
 third_party/
+third-party/
 coverage/
 cmake-build-*/
 _codeql_build_dir/
