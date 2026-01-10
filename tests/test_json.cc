@@ -1,10 +1,13 @@
-#include "../third-party/doctest/doctest.h"
 #include "../include/json.hpp"
+#include "../third-party/doctest/doctest.h"
 #include <limits>
 
 using namespace pixellib::core::json;
 
-TEST_CASE("parse_literals_and_types") {
+TEST_SUITE("json_module")
+{
+  TEST_CASE("parse_literals_and_types")
+  {
     JSON v;
     CHECK(JSON::parse("null", v) == true);
     CHECK(v.is_null());
@@ -16,9 +19,10 @@ TEST_CASE("parse_literals_and_types") {
     CHECK(JSON::parse("false", v) == true);
     CHECK(v.is_bool());
     CHECK(v.as_bool() == false);
-}
+  }
 
-TEST_CASE("parse_numbers_and_number_helpers") {
+  TEST_CASE("parse_numbers_and_number_helpers")
+  {
     JSON v;
     CHECK(JSON::parse("42", v));
     CHECK(v.is_number());
@@ -34,24 +38,24 @@ TEST_CASE("parse_numbers_and_number_helpers") {
     CHECK(JSON::parse("1e3", v));
     CHECK(v.is_number());
     CHECK(v.as_number().to_double() == 1000.0);
-}
+  }
 
-TEST_CASE("parse_strings_and_escapes") {
+  TEST_CASE("parse_strings_and_escapes")
+  {
     JSON v;
     CHECK(JSON::parse("\"hello\\nworld\"", v));
     CHECK(v.is_string());
     CHECK(v.as_string() == "hello\nworld");
 
-    
     CHECK(JSON::parse("\"\\u0041\\u0042\\u0043\"", v));
     CHECK(v.as_string() == "ABC");
 
-    
     CHECK(JSON::parse("\"\\uD83D\\uDE00\"", v));
-    CHECK(v.as_string().size() >= 4); 
-}
+    CHECK(v.as_string().size() >= 4);
+  }
 
-TEST_CASE("parse_arrays_and_objects") {
+  TEST_CASE("parse_arrays_and_objects")
+  {
     JSON v;
     CHECK(JSON::parse("[1, 2, 3]", v));
     CHECK(v.is_array());
@@ -68,9 +72,10 @@ TEST_CASE("parse_arrays_and_objects") {
     REQUIRE(p);
     REQUIRE(p->is_array());
     CHECK(p->as_array().size() == 2);
-}
+  }
 
-TEST_CASE("parse_errors_and_messages") {
+  TEST_CASE("parse_errors_and_messages")
+  {
     JSON v;
     JsonError err;
     CHECK_FALSE(JSON::parse("\"unterminated", v, &err));
@@ -78,15 +83,16 @@ TEST_CASE("parse_errors_and_messages") {
 
     CHECK_FALSE(JSON::parse("[1, , 2]", v, &err));
     {
-        bool found = (err.message.find("Unexpected character") != std::string::npos) || (err.message.find("Expected") != std::string::npos);
-        CHECK(found);
+      bool found = (err.message.find("Unexpected character") != std::string::npos) || (err.message.find("Expected") != std::string::npos);
+      CHECK(found);
     }
 
     CHECK_THROWS_AS(JSON::parse_or_throw("{invalid}"), std::invalid_argument);
-}
+  }
 
-TEST_CASE("stringify_and_escape_options") {
-    JSON obj = JSON::object(JSON::object_t{{"k1", JSON(std::string("v1"))},{"k2", JSON::array(JSON::array_t{JSON::number("1"), JSON::number("2")})}});
+  TEST_CASE("stringify_and_escape_options")
+  {
+    JSON obj = JSON::object(JSON::object_t{{"k1", JSON(std::string("v1"))}, {"k2", JSON::array(JSON::array_t{JSON::number("1"), JSON::number("2")})}});
     std::string compact = obj.stringify({false, 2, false});
     INFO(compact);
     CHECK(compact.find("\"k1\"") != std::string::npos);
@@ -95,47 +101,45 @@ TEST_CASE("stringify_and_escape_options") {
     std::string pretty = obj.stringify({true, 4, false});
     CHECK(pretty.find("\n") != std::string::npos);
 
-    
     JSON s = JSON(std::string("/path/"));
-    std::string escaped = s.stringify({false,2,true});
+    std::string escaped = s.stringify({false, 2, true});
     CHECK(escaped.find("\\/") != std::string::npos);
-}
+  }
 
-TEST_CASE("validate_and_parse_or_throw") {
+  TEST_CASE("validate_and_parse_or_throw")
+  {
     CHECK(JSON::validate("{\"x\": 1}"));
     CHECK_FALSE(JSON::validate("{\"x\": }"));
 
     CHECK_NOTHROW(JSON::parse_or_throw("[true,false]"));
-}
+  }
 
-TEST_CASE("number_conversion_fallbacks") {
-    
+  TEST_CASE("number_conversion_fallbacks")
+  {
+
     JSON n = JSON::number("notanumber");
     CHECK(n.as_number().to_double(3.14) == 3.14);
     CHECK(n.as_number().to_int64(42) == 42);
 
-    
     JSON big = JSON::number("9999999999999999999999999999");
     CHECK(big.as_number().to_int64(123) == std::numeric_limits<int64_t>::max());
 
-    
     JSON frac = JSON::number("1.23");
     CHECK_FALSE(frac.as_number().is_integral());
-}
+  }
 
-TEST_CASE("unicode_escape_error_cases") {
+  TEST_CASE("unicode_escape_error_cases")
+  {
     JSON v;
     JsonError err;
 
-    
     CHECK_FALSE(JSON::parse("\"\\uZZZZ\"", v, &err));
     CHECK(err.message.find("Invalid hex in unicode escape") != std::string::npos);
 
-    
     CHECK_FALSE(JSON::parse("\"\\uD800\\u0041\"", v, &err));
     CHECK(err.message.find("Invalid low surrogate") != std::string::npos);
 
-    
     CHECK_FALSE(JSON::parse("\"\\uD83D\"", v, &err));
     CHECK(err.message.find("Missing low surrogate") != std::string::npos);
-} 
+  }
+}
