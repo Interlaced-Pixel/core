@@ -1,40 +1,28 @@
+#include "../include/filesystem.hpp"
+#include "../include/json.hpp"
+#include "../include/logging.hpp"
+#include "../include/network.hpp"
+#include "../third-party/doctest/doctest.h"
 #include <iostream>
 #include <sstream>
 #include <string>
-#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
-#include "../third-party/doctest/doctest.h"
-#include "../include/network.hpp"
-#include "../include/filesystem.hpp"
-#include "../include/logging.hpp"
-#include "../include/json.hpp"
 
-int main() {
-    using namespace pixellib_test;
-    for (const auto &t : registry()) {
-        try {
-            t.fn();
-        } catch (const std::exception &e) {
-            record_failure(e.what(), __FILE__, __LINE__);
-        } catch (...) {
-            record_failure("unknown exception", __FILE__, __LINE__);
-        }
-    }
-    return failure_count() == 0 ? 0 : 1;
-}
+TEST_SUITE("sanity checks")
+{
 
-
-TEST_SUITE("sanity checks") {
-
-TEST_CASE("arithmetic") {
+  TEST_CASE("arithmetic")
+  {
     CHECK(1 + 1 == 2);
-}
+  }
 
-TEST_CASE("filesystem") {
+  TEST_CASE("filesystem")
+  {
     CHECK(pixellib::core::filesystem::FileSystem::exists("/nonexistent") == false);
     CHECK(pixellib::core::filesystem::FileSystem::exists("/tmp") == true);
-}
+  }
 
-TEST_CASE("logging") {
+  TEST_CASE("logging")
+  {
     std::ostringstream out, err;
     pixellib::core::logging::Logger::set_output_streams(out, err);
     pixellib::core::logging::Logger::set_level(pixellib::core::logging::LOG_WARNING);
@@ -44,16 +32,18 @@ TEST_CASE("logging") {
     CHECK(out_str.find("visible warning") != std::string::npos);
     CHECK(out_str.find("filtered out message") == std::string::npos);
     pixellib::core::logging::Logger::set_output_streams(std::cout, std::cerr);
-}
+  }
 
-TEST_CASE("json") {
+  TEST_CASE("json")
+  {
     std::string json_str = R"({"key": "value", "number": 42})";
     auto json = pixellib::core::json::JSON::parse_or_throw(json_str);
     CHECK(json["key"].as_string() == "value");
     CHECK(json["number"].as_number().to_int64() == 42);
-}
+  }
 
-TEST_CASE("network") {
+  TEST_CASE("network")
+  {
     std::string response = pixellib::core::network::Network::http_get("http://example/test");
     CHECK(response.find("HTTP response from http://example/test") != std::string::npos);
 
@@ -65,6 +55,5 @@ TEST_CASE("network") {
 
     std::string r4 = pixellib::core::network::Network::https_post("https://example/post", "p");
     CHECK(r4.find("p") != std::string::npos);
-}
-
+  }
 }
