@@ -12,6 +12,7 @@ _codeql_build_dir/
 _codeql_detected_source_root
 
 # IDE files
+windsurf/
 .zed/
 .cache/
 .idea/

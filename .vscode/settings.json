@@ -1,4 +1,129 @@
 {
-    "clangd.arguments": ["--background-index"],
-    "clangd.checkUpdates": true
-  }
+    // VS Code settings optimized for clang-format-2025 extension
+    // These settings provide the best experience with the extension's advanced features
+    // clangd settings
+    "clangd.arguments": [
+        "--background-index",
+        "--header-insertion=never",
+        "--completion-style=detailed",
+        "--clang-tidy",
+        "--clang-tidy-checks=*",
+        "--all-scopes-completion",
+        "--completion-parse=auto",
+        "--log=verbose"
+    ],
+    "clangd.checkUpdates": true,
+    // C++ formatting settings
+    "C_Cpp.clang_format_style": "file",
+    "C_Cpp.clang_format_fallbackStyle": "LLVM",
+    "C_Cpp.clang_format_sortIncludes": true,
+    "C_Cpp.clang_format_sortIncludes.detected": true,
+    // clang-format-2025 extension specific settings
+    "clang-format-2025.enable": true,
+    "clang-format-2025.executable": "/opt/homebrew/bin/clang-format",
+    "clang-format-2025.style": "file",
+    "clang-format-2025.style.file": "${workspaceFolder}/.clang-format",
+    "clang-format-2025.style.fallback": "LLVM",
+    "clang-format-2025.formatOnSave": true,
+    "clang-format-2025.formatOnType": true,
+    "clang-format-2025.formatOnPaste": true,
+    "clang-format-2025.formatOnSaveMode": "file",
+    "clang-format-2025.editorconfig": true,
+    "clang-format-2025.defaultLanguage": "cpp",
+    // clang-tidy integration
+    "C_Cpp.clang_tidy.enable": true,
+    "C_Cpp.clang_tidy.checks": "*",
+    "C_Cpp.clang_tidy.config": "${workspaceFolder}/.clang-tidy",
+    "C_Cpp.clang_tidy.compileCommands": "${workspaceFolder}/build/compile_commands.json",
+    "C_Cpp.clang_tidy.runOnSave": true,
+    "C_Cpp.clang_tidy.runOnBuild": true,
+    "C_Cpp.clang_tidy.quiet": false,
+    "C_Cpp.clang_tidy.fixOnSave": false,
+    // clang-format-2025 + clang-tidy integration
+    "clang-format-2025.clangTidy.enable": true,
+    "clang-format-2025.clangTidy.config": "${workspaceFolder}/.clang-tidy",
+    "clang-format-2025.clangTidy.checks": "bugprone-*,performance-*,modernize-*",
+    "clang-format-2025.clangTidy.runOnSave": true,
+    "clang-format-2025.clangTidy.runOnFormat": true,
+    "clang-format-2025.clangTidy.fixOnSave": false,
+    "clang-format-2025.clangTidy.quiet": false,
+    // Editor settings for optimal formatting experience
+    "editor.formatOnSave": true,
+    "editor.formatOnType": true,
+    "editor.formatOnPaste": true,
+    "editor.codeActionsOnSave": {
+        "source.fixAll.clang-tidy": "explicit",
+        "source.fixAll": "explicit",
+        "source.organizeImports": "explicit"
+    },
+    "editor.codeActionOnSaveTimeout": 2000,
+    // C++ specific editor settings
+    "[cpp]": {
+        "editor.defaultFormatter": "ebextensions.clang-format-2025",
+        "editor.formatOnSave": true,
+        "editor.tabSize": 2,
+        "editor.insertSpaces": true,
+        "editor.detectIndentation": false
+    },
+    "[hpp]": {
+        "editor.defaultFormatter": "ebextensions.clang-format-2025",
+        "editor.formatOnSave": true,
+        "editor.tabSize": 2,
+        "editor.insertSpaces": true,
+        "editor.detectIndentation": false
+    },
+    "[cc]": {
+        "editor.defaultFormatter": "ebextensions.clang-format-2025",
+        "editor.formatOnSave": true,
+        "editor.tabSize": 2,
+        "editor.insertSpaces": true,
+        "editor.detectIndentation": false
+    },
+    "[h]": {
+        "editor.defaultFormatter": "ebextensions.clang-format-2025",
+        "editor.formatOnSave": true,
+        "editor.tabSize": 2,
+        "editor.insertSpaces": true,
+        "editor.detectIndentation": false
+    },
+    // IntelliC++ settings for better C++ support
+    "C_Cpp.intelliSenseEngine": "default",
+    "C_Cpp.intelliSenseEngineFallback": true,
+    "C_Cpp.autocomplete": "default",
+    "C_Cpp.enhancedColorization": "enabled",
+    "C_Cpp.errorSquiggles": "enabled",
+    "C_Cpp.inlayHints": {
+        "enabled": true,
+        "parameterNames": true,
+        "parameterNamesHints": "literals",
+        "referenceOperator": "deref",
+        "deducedTypes": true
+    },
+    // File associations
+    "files.associations": {
+        "*.hpp": "cpp",
+        "*.cc": "cpp",
+        "*.cpp": "cpp",
+        "*.cxx": "cpp",
+        "*.h": "cpp",
+        "*.c": "cpp"
+    },
+    // Git integration
+    "git.enableSmartCommit": true,
+    "git.autofetch": true,
+    // Explorer settings
+    "explorer.fileNesting.enabled": true,
+    "explorer.fileNesting.patterns": {
+        "*.cpp": "*.h, *.hpp, *.cpp",
+        "*.hpp": "*.cpp, *.h",
+        "*.cc": "*.h, *.hpp, *.cc",
+        "*.c": "*.h"
+    },
+    // Build and test settings
+    "files.exclude": {
+        "**/build": false,
+        "**/.git": true,
+        "**/.DS_Store": true,
+        "**/node_modules": true
+    }
+}

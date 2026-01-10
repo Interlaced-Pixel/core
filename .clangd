@@ -4,10 +4,23 @@ CompileFlags:
   Add:
     - "-std=c++23"
     - "-I./include"
+    - "-I./tests"
     - "-I./third-party"
 Diagnostics:
   MissingIncludes: Strict
   UnusedIncludes: Strict
+  ClangTidy:
+    Add:
+      - "*"
+    Remove:
+      - "modernize-use-trailing-return-type"
+      - "readability-identifier-length"
 Index:
   Background: Build
   StandardLibrary: true
+  Build: 
+    StaticAnalyzer: True
+    Background: True
+Completion:
+  IncludeFixer: True
+  MaxResults: 50
