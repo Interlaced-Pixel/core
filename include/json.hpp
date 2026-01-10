@@ -3,13 +3,16 @@
 #define PIXELLIB_CORE_JSON_HPP
 
 #include <cctype>
+#include <cstddef>
 #include <cstdint>
 #include <cstdlib>
 #include <iomanip>
+#include <ios>
 #include <limits>
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <variant>
 #include <vector>
 #include <sstream>

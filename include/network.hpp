@@ -1,10 +1,13 @@
 #ifndef PIXELLIB_CORE_NETWORK_HPP
 #define PIXELLIB_CORE_NETWORK_HPP
 
+#include <cctype>
 #include <cstdlib>
 #include <ctime>
 #include <sstream>
 #include <string>
+#include <sys/_endian.h>
+#include <sys/_types/_timeval.h>
 #include <vector>
 #include <functional>
 

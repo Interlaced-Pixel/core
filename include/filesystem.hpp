@@ -2,9 +2,14 @@
 #ifndef PIXELLIB_CORE_FILESYSTEM_HPP
 #define PIXELLIB_CORE_FILESYSTEM_HPP
 
+#include <cstdio>
+#include <cstdlib>
+#include <ios>
 #include <string>
 #include <fstream>
 #include <sstream>
+#include <sys/dirent.h>
+#include <sys/syslimits.h>
 #include <vector>
 #include <sys/stat.h>
 #include <ctime>

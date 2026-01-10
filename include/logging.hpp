@@ -24,11 +24,19 @@
 #ifndef PIXELLIB_CORE_LOGGING_HPP
 #define PIXELLIB_CORE_LOGGING_HPP
 
+#include <algorithm>
 #include <chrono>
+#include <cstdio>
+#include <ctime>
+#include <exception>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <memory>
+#include <tuple>
+#include <type_traits>
+#include <unordered_map>
+#include <utility>
 #include <vector>
 #include <cstddef>
 #include <cstring> // for strstr used to detect placeholder patterns
