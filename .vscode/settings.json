@@ -125,5 +125,9 @@
         "**/.git": true,
         "**/.DS_Store": true,
         "**/node_modules": true
-    }
+    },
+    // Auto-restart clangd on .clangd save
+    "files.watcherExclude": [
+        "**/build/**"
+    ]
 }

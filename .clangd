@@ -16,11 +16,5 @@ Diagnostics:
       - "modernize-use-trailing-return-type"
       - "readability-identifier-length"
 Index:
-  Background: Build
+  Background: true
   StandardLibrary: true
-  Build: 
-    StaticAnalyzer: True
-    Background: True
-Completion:
-  IncludeFixer: True
-  MaxResults: 50
