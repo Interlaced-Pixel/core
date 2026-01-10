@@ -1,9 +1,9 @@
-#include "../include/doctest.h"
+#include "test_framework.hpp"
 #include "../include/json.hpp"
 #include <limits>
 
 using namespace pixellib::core::json;
-using doctest::Approx;
+using pixellib_test::Approx;
 
 TEST_SUITE("json_module") {
 
@@ -108,7 +108,7 @@ TEST_CASE("validate_and_parse_or_throw") {
     CHECK(JSON::validate("{\"x\": 1}"));
     CHECK_FALSE(JSON::validate("{\"x\": }"));
 
-    CHECK_NOTHROW(JSON::parse_or_throw("[true,false]"););
+    CHECK_NOTHROW(JSON::parse_or_throw("[true,false]"));
 }
 
 TEST_CASE("number_conversion_fallbacks") {
