@@ -65,7 +65,7 @@ make coverage
 
 ### Testing
 
-Unit tests are included and can be run using the Makefile. The tests use doctest for assertions and aim for at least 95% code coverage.
+Unit tests are included and can be run using the Makefile. The tests use a small local test harness (no doctest dependency) and aim for at least 95% code coverage.
 
 ```bash
 # Run tests
@@ -187,7 +187,7 @@ Platform-specific implementations are included where necessary to ensure consist
 
 ## Testing
 
-Unit tests are included and can be run using the Makefile. The tests use doctest for assertions and aim for at least 95% code coverage.
+Unit tests are included and can be run using the Makefile. The tests use a small local test harness (no doctest dependency) and aim for at least 95% code coverage.
 
 ```bash
 # Run tests
