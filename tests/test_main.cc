@@ -1,9 +1,22 @@
-#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
-#include "../include/doctest.h"
+#include "test_framework.hpp"
 #include "../include/network.hpp"
 #include "../include/filesystem.hpp"
 #include "../include/logging.hpp"
 #include "../include/json.hpp"
+
+int main() {
+    using namespace pixellib_test;
+    for (const auto &t : registry()) {
+        try {
+            t.fn();
+        } catch (const std::exception &e) {
+            record_failure(e.what(), __FILE__, __LINE__);
+        } catch (...) {
+            record_failure("unknown exception", __FILE__, __LINE__);
+        }
+    }
+    return failure_count() == 0 ? 0 : 1;
+}
 
 
 TEST_SUITE("pixellib_sanity") {
