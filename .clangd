@@ -4,7 +4,6 @@ CompileFlags:
   Add:
     - "-std=c++23"
     - "-I./include"
-    - "-I./tests/helpers"
     - "-I./third-party"
 Diagnostics:
   MissingIncludes: Strict
