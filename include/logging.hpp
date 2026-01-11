@@ -977,7 +977,8 @@ public:
   /**
    * @brief Logger configuration object for fluent configuration
    */
-  struct LoggerConfig {
+  struct LoggerConfig
+  {
     LogLevel level = LOG_INFO;
     std::vector<std::unique_ptr<LogSink>> sinks;
     std::unique_ptr<LogFormatter> formatter;
@@ -991,46 +992,59 @@ public:
   /**
    * @brief Builder for `LoggerConfig` to allow fluent chained configuration
    */
-  class LoggerConfigBuilder {
+  class LoggerConfigBuilder
+  {
   private:
     LoggerConfig cfg_;
+
   public:
-    LoggerConfigBuilder &set_level(LogLevel level) {
+    LoggerConfigBuilder &set_level(LogLevel level)
+    {
       cfg_.level = level;
       return *this;
     }
 
-    LoggerConfigBuilder &add_stream_sink(std::ostream &out) {
+    LoggerConfigBuilder &add_stream_sink(std::ostream &out)
+    {
       cfg_.sinks.emplace_back(std::make_unique<StreamSink>(out));
       return *this;
     }
 
-    LoggerConfigBuilder &add_file_sink(const std::string &filename, size_t max_file_size = 10485760, int max_files = 5) {
+    LoggerConfigBuilder &add_file_sink(const std::string &filename, size_t max_file_size = 10485760, int max_files = 5)
+    {
       cfg_.sinks.emplace_back(std::make_unique<RotatingFileLogger>(filename, max_file_size, max_files));
       return *this;
     }
 
-    LoggerConfigBuilder &add_async_sink(std::unique_ptr<LogSink> inner_sink, size_t max_queue_size = 1024, AsyncLogSink::DropPolicy policy = AsyncLogSink::DropPolicy::DROP_NEWEST) {
+    LoggerConfigBuilder &add_async_sink(std::unique_ptr<LogSink> inner_sink, size_t max_queue_size = 1024, AsyncLogSink::DropPolicy policy = AsyncLogSink::DropPolicy::DROP_NEWEST)
+    {
       cfg_.sinks.emplace_back(std::make_unique<AsyncLogSink>(std::move(inner_sink), max_queue_size, policy));
       return *this;
     }
 
-    LoggerConfigBuilder &add_async_stream_sink(std::ostream &out, size_t max_queue_size = 1024, AsyncLogSink::DropPolicy policy = AsyncLogSink::DropPolicy::DROP_NEWEST) {
+    LoggerConfigBuilder &add_async_stream_sink(std::ostream &out, size_t max_queue_size = 1024, AsyncLogSink::DropPolicy policy = AsyncLogSink::DropPolicy::DROP_NEWEST)
+    {
       cfg_.sinks.emplace_back(std::make_unique<AsyncLogSink>(std::make_unique<StreamSink>(out), max_queue_size, policy));
       return *this;
     }
 
-    LoggerConfigBuilder &add_async_file_sink(const std::string &filename, size_t max_queue_size = 1024, AsyncLogSink::DropPolicy policy = AsyncLogSink::DropPolicy::DROP_NEWEST, size_t max_file_size = 10485760, int max_files = 5) {
+    LoggerConfigBuilder &add_async_file_sink(const std::string &filename, size_t max_queue_size = 1024, AsyncLogSink::DropPolicy policy = AsyncLogSink::DropPolicy::DROP_NEWEST,
+                                             size_t max_file_size = 10485760, int max_files = 5)
+    {
       cfg_.sinks.emplace_back(std::make_unique<AsyncLogSink>(std::make_unique<RotatingFileLogger>(filename, max_file_size, max_files), max_queue_size, policy));
       return *this;
     }
 
-    LoggerConfigBuilder &set_formatter(std::unique_ptr<LogFormatter> formatter) {
+    LoggerConfigBuilder &set_formatter(std::unique_ptr<LogFormatter> formatter)
+    {
       cfg_.formatter = std::move(formatter);
       return *this;
     }
 
-    LoggerConfig build() { return std::move(cfg_); }
+    LoggerConfig build()
+    {
+      return std::move(cfg_);
+    }
   };
 
   /**
@@ -1038,7 +1052,8 @@ public:
    *
    * This takes ownership of sinks and formatter from the provided config.
    */
-  static void configure(LoggerConfig cfg) {
+  static void configure(LoggerConfig cfg)
+  {
     std::lock_guard<std::mutex> lock(log_mutex);
     current_level = cfg.level;
     sinks = std::move(cfg.sinks);
