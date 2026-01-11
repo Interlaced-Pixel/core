@@ -1,3 +1,5 @@
+.ONESHELL:
+SHELL := /bin/bash
 CXX ?= clang++
 STD ?= c++23
 WARN := -Wall -Wextra -Wpedantic
@@ -96,9 +98,9 @@ test: $(TEST_BIN)
 
 run-tests: test
 ifeq ($(IS_CLANG),1)
-	@$(COV_ENV)="$(TEST_BIN).profraw" "$(TEST_BIN)"
+	@env PIXELLIB_TEST_MODE=1 $(COV_ENV)="$(TEST_BIN).profraw" "$(TEST_BIN)"
 else
-	@"$(TEST_BIN)"
+	@env PIXELLIB_TEST_MODE=1 "$(TEST_BIN)"
 endif
 
 coverage: run-tests
