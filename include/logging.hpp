@@ -1238,11 +1238,13 @@ public:
    * @param level The LogLevel for this message
    * @param message The message to log
    */
-  static void log(LogLevel level, const std::string &message) {
+  static void log(LogLevel level, const std::string &message)
+  {
     // Early exit if the message won't be logged
     {
       std::lock_guard<std::mutex> lock(log_mutex);
-      if (level < current_level) {
+      if (level < current_level)
+      {
         return;
       }
     }
@@ -1258,30 +1260,41 @@ public:
     std::string formatted_message;
 
     // Use custom formatter if available
-    if (formatter) {
+    if (formatter)
+    {
       formatted_message = formatter->format(level, message, local_tm);
-    } else {
+    }
+    else
+    {
       std::ostringstream oss;
-      oss << "[" << std::put_time(&local_tm, "%Y-%m-%d %H:%M:%S") << "] ["
-          << log_level_to_string(level) << "] " << message;
+      oss << "[" << std::put_time(&local_tm, "%Y-%m-%d %H:%M:%S") << "] [" << log_level_to_string(level) << "] " << message;
       formatted_message = oss.str();
 
       // Prefer sinks if available (early fast path)
       {
         std::lock_guard<std::mutex> lock(log_mutex);
-        if (!sinks.empty()) {
-          for (auto &sink : sinks) {
-            try {
+        if (!sinks.empty())
+        {
+          for (auto &sink : sinks)
+          {
+            try
+            {
               sink->write(formatted_message);
-            } catch (const std::exception &e) {
-              if (auto *ss = dynamic_cast<StreamSink*>(sink.get())) {
+            }
+            catch (const std::exception &e)
+            {
+              if (auto *ss = dynamic_cast<StreamSink *>(sink.get()))
+              {
                 ss->clear_stream();
               }
               std::cerr << "Logging error: " << e.what() << std::endl;
               std::cerr << formatted_message << std::endl;
               std::cerr.flush();
-            } catch (...) {
-              if (auto *ss = dynamic_cast<StreamSink*>(sink.get())) {
+            }
+            catch (...)
+            {
+              if (auto *ss = dynamic_cast<StreamSink *>(sink.get()))
+              {
                 ss->clear_stream();
               }
               std::cerr << "Unknown logging error occurred" << std::endl;
@@ -1296,25 +1309,33 @@ public:
 
     // Output the message (critical section only for output)
     std::lock_guard<std::mutex> lock(log_mutex);
-    if (file_logger) {
+    if (file_logger)
+    {
       file_logger->write(formatted_message);
-    } else {
-      try {
+    }
+    else
+    {
+      try
+      {
         // Choose output stream based on log level
-        std::ostream &out_stream =
-            (level == LOG_ERROR) ? *error_stream : *output_stream;
+        std::ostream &out_stream = (level == LOG_ERROR) ? *error_stream : *output_stream;
         out_stream << formatted_message << std::endl;
 
         // Check if the stream is in a good state
-        if (!out_stream.good()) {
+        if (!out_stream.good())
+        {
           // If the stream is not good, try to reset it
           out_stream.clear();
         }
-      } catch (const std::exception &e) {
+      }
+      catch (const std::exception &e)
+      {
         // If we can't write to the stream, try to write to cerr as a fallback
         std::cerr << "Logging error: " << e.what() << std::endl;
         std::cerr << formatted_message << std::endl;
-      } catch (...) {
+      }
+      catch (...)
+      {
         // If we can't write to the stream, try to write to cerr as a fallback
         std::cerr << "Unknown logging error occurred" << std::endl;
         std::cerr << formatted_message << std::endl;
@@ -1330,12 +1351,13 @@ public:
    * @param file The source file name (typically __FILE__)
    * @param line The source line number (typically __LINE__)
    */
-  static void log(LogLevel level, const std::string &message, const char *file,
-                  int line) {
+  static void log(LogLevel level, const std::string &message, const char *file, int line)
+  {
     // Early exit if the message won't be logged
     {
       std::lock_guard<std::mutex> lock(log_mutex);
-      if (level < current_level) {
+      if (level < current_level)
+      {
         return;
       }
     }
@@ -1351,41 +1373,52 @@ public:
     std::string formatted_message;
 
     // Use custom formatter if available
-    if (formatter) {
-      formatted_message =
-          formatter->format(level, message, local_tm, file, line);
-    } else {
+    if (formatter)
+    {
+      formatted_message = formatter->format(level, message, local_tm, file, line);
+    }
+    else
+    {
       // Extract just the filename from the full path
       const char *filename = file;
-      for (const char *p = file; *p; ++p) {
-        if (*p == '/' || *p == '\\') {
+      for (const char *p = file; *p; ++p)
+      {
+        if (*p == '/' || *p == '\\')
+        {
           filename = p + 1;
         }
       }
 
       // Format the message with file and line information
       std::ostringstream oss;
-      oss << "[" << std::put_time(&local_tm, "%Y-%m-%d %H:%M:%S") << "] ["
-          << log_level_to_string(level) << "] " << message << " (" << filename
-          << ":" << line << ")";
+      oss << "[" << std::put_time(&local_tm, "%Y-%m-%d %H:%M:%S") << "] [" << log_level_to_string(level) << "] " << message << " (" << filename << ":" << line << ")";
       formatted_message = oss.str();
 
       // Prefer sinks if available (early fast path)
       {
         std::lock_guard<std::mutex> lock(log_mutex);
-        if (!sinks.empty()) {
-          for (auto &sink : sinks) {
-            try {
+        if (!sinks.empty())
+        {
+          for (auto &sink : sinks)
+          {
+            try
+            {
               sink->write(formatted_message);
-            } catch (const std::exception &e) {
-              if (auto *ss = dynamic_cast<StreamSink*>(sink.get())) {
+            }
+            catch (const std::exception &e)
+            {
+              if (auto *ss = dynamic_cast<StreamSink *>(sink.get()))
+              {
                 ss->clear_stream();
               }
               std::cerr << "Logging error: " << e.what() << std::endl;
               std::cerr << formatted_message << std::endl;
               std::cerr.flush();
-            } catch (...) {
-              if (auto *ss = dynamic_cast<StreamSink*>(sink.get())) {
+            }
+            catch (...)
+            {
+              if (auto *ss = dynamic_cast<StreamSink *>(sink.get()))
+              {
                 ss->clear_stream();
               }
               std::cerr << "Unknown logging error occurred" << std::endl;
@@ -1400,25 +1433,33 @@ public:
 
     // Output the message (critical section only for output)
     std::lock_guard<std::mutex> lock(log_mutex);
-    if (file_logger) {
+    if (file_logger)
+    {
       file_logger->write(formatted_message);
-    } else {
-      try {
+    }
+    else
+    {
+      try
+      {
         // Choose output stream based on log level
-        std::ostream &out_stream =
-            (level == LOG_ERROR) ? *error_stream : *output_stream;
+        std::ostream &out_stream = (level == LOG_ERROR) ? *error_stream : *output_stream;
         out_stream << formatted_message << std::endl;
 
         // Check if the stream is in a good state
-        if (!out_stream.good()) {
+        if (!out_stream.good())
+        {
           // If the stream is not good, try to reset it
           out_stream.clear();
         }
-      } catch (const std::exception &e) {
+      }
+      catch (const std::exception &e)
+      {
         // If we can't write to the stream, try to write to cerr as a fallback
         std::cerr << "Logging error: " << e.what() << std::endl;
         std::cerr << formatted_message << std::endl;
-      } catch (...) {
+      }
+      catch (...)
+      {
         // If we can't write to the stream, try to write to cerr as a fallback
         std::cerr << "Unknown logging error occurred" << std::endl;
         std::cerr << formatted_message << std::endl;
