@@ -610,21 +610,24 @@ inline const std::unordered_map<std::string, std::string> &get_all()
  *   Logger::info("User action"); // will include user_id=123 request_id=abc
  * } // context automatically removed
  */
-class LogContext {
+class LogContext
+{
 private:
   std::vector<std::pair<std::string, std::string>> added_keys_;
 
 public:
   LogContext() = default;
-  ~LogContext() {
-    for (const auto &key : added_keys_) {
+  ~LogContext()
+  {
+    for (const auto &key : added_keys_)
+    {
       remove_context(key.first);
     }
   }
 
   // Add a key-value pair to the current thread's context
-  template <typename T>
-  void add(const std::string &key, const T &value) {
+  template <typename T> void add(const std::string &key, const T &value)
+  {
     std::ostringstream oss;
     oss << value;
     add_context(key, oss.str());
@@ -632,12 +635,10 @@ public:
   }
 
   // Remove a key from the current thread's context
-  void remove(const std::string &key) {
+  void remove(const std::string &key)
+  {
     remove_context(key);
-    added_keys_.erase(
-        std::remove_if(added_keys_.begin(), added_keys_.end(),
-                       [&](const auto &p) { return p.first == key; }),
-        added_keys_.end());
+    added_keys_.erase(std::remove_if(added_keys_.begin(), added_keys_.end(), [&](const auto &p) { return p.first == key; }), added_keys_.end());
   }
 
 private:
@@ -646,33 +647,34 @@ private:
 };
 
 // Implement LogContext private methods
-inline void LogContext::add_context(const std::string &key, const std::string &value) {
+inline void LogContext::add_context(const std::string &key, const std::string &value)
+{
   LogContextStorage::set(key, value);
 }
 
-inline void LogContext::remove_context(const std::string &key) {
+inline void LogContext::remove_context(const std::string &key)
+{
   LogContextStorage::remove(key);
 }
 
 /**
  * @brief Log formatter interface
  */
-class LogFormatter {
+class LogFormatter
+{
 public:
   virtual ~LogFormatter() = default;
-  virtual std::string format(LogLevel level, const std::string &message,
-                             const std::tm &time_info,
-                             const char *file = nullptr, int line = 0) = 0;
+  virtual std::string format(LogLevel level, const std::string &message, const std::tm &time_info, const char *file = nullptr, int line = 0) = 0;
 };
 
 /**
  * @brief JSON log formatter implementation
  */
-class JSONLogFormatter : public LogFormatter {
+class JSONLogFormatter : public LogFormatter
+{
 public:
-  std::string format(LogLevel level, const std::string &message,
-                     const std::tm &time_info, const char *file = nullptr,
-                     int line = 0) override {
+  std::string format(LogLevel level, const std::string &message, const std::tm &time_info, const char *file = nullptr, int line = 0) override
+  {
     std::ostringstream oss;
     oss << "{";
     oss << "\"timestamp\":\"" << std::put_time(&time_info, "%Y-%m-%dT%H:%M:%SZ") << "\",";
@@ -681,18 +683,22 @@ public:
 
     // Add context
     const auto &context = LogContextStorage::get_all();
-    if (!context.empty()) {
+    if (!context.empty())
+    {
       oss << ",\"context\":{";
       bool first = true;
-      for (const auto &kv : context) {
-        if (!first) oss << ",";
+      for (const auto &kv : context)
+      {
+        if (!first)
+          oss << ",";
         oss << "\"" << escape_json(kv.first) << "\":\"" << escape_json(kv.second) << "\"";
         first = false;
       }
       oss << "}";
     }
 
-    if (file && line > 0) {
+    if (file && line > 0)
+    {
       oss << ",\"file\":\"" << escape_json(file) << "\",\"line\":" << line;
     }
 
