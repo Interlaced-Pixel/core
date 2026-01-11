@@ -12,6 +12,7 @@
 #endif
 
 // Cross-platform environment variable helpers
+// Note: Error handling intentionally omitted for test simplicity
 static void set_env_var(const char *name, const char *value)
 {
 #ifdef _WIN32
