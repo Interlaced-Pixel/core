@@ -7,7 +7,7 @@
 #include <sstream>
 #include <string>
 
-TEST_SUITE("sanity checks")
+TEST_SUITE("Sanity Checks")
 {
 
   TEST_CASE("arithmetic")
