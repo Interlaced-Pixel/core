@@ -48,6 +48,11 @@
 #else
 #include <dirent.h>
 #include <unistd.h>
+#ifdef __APPLE__
+#include <sys/syslimits.h>
+#else
+#include <limits.h>
+#endif
 #define MKDIR(path, mode) mkdir(path, mode)
 #endif
 

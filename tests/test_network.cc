@@ -6,7 +6,30 @@
 #include <fstream>
 #include <iterator>
 #include <string>
+
+#ifndef _WIN32
 #include <unistd.h>
+#endif
+
+// Cross-platform environment variable helpers
+// Note: Error handling intentionally omitted for test simplicity
+static void set_env_var(const char *name, const char *value)
+{
+#ifdef _WIN32
+  _putenv_s(name, value);
+#else
+  ::setenv(name, value, 1);
+#endif
+}
+
+static void unset_env_var(const char *name)
+{
+#ifdef _WIN32
+  _putenv_s(name, "");
+#else
+  ::unsetenv(name);
+#endif
+}
 
 TEST_SUITE("Network Module")
 {
@@ -34,7 +57,7 @@ TEST_SUITE("Network Module")
   TEST_CASE("resolve_hostname - test mode")
   {
     // Set test mode
-    ::setenv("PIXELLIB_TEST_MODE", "1", 1);
+    set_env_var("PIXELLIB_TEST_MODE", "1");
 
     auto result1 = pixellib::core::network::Network::resolve_hostname("localhost");
     CHECK(result1.success == true);
@@ -57,7 +80,7 @@ TEST_SUITE("Network Module")
     CHECK(result4.message == "127.0.0.1");
 
     // Clean up
-    ::unsetenv("PIXELLIB_TEST_MODE");
+    unset_env_var("PIXELLIB_TEST_MODE");
   }
 
   TEST_CASE("is_host_reachable - empty input")
@@ -71,7 +94,7 @@ TEST_SUITE("Network Module")
   TEST_CASE("is_host_reachable - test mode")
   {
     // Set test mode
-    ::setenv("PIXELLIB_TEST_MODE", "1", 1);
+    set_env_var("PIXELLIB_TEST_MODE", "1");
 
     auto result = pixellib::core::network::Network::is_host_reachable("example.com");
     CHECK(result.success == true);
@@ -79,7 +102,7 @@ TEST_SUITE("Network Module")
     CHECK(result.message == "Host is reachable (test mode)");
 
     // Clean up
-    ::unsetenv("PIXELLIB_TEST_MODE");
+    unset_env_var("PIXELLIB_TEST_MODE");
   }
 
   TEST_CASE("download_file - empty inputs")
@@ -113,7 +136,7 @@ TEST_SUITE("Network Module")
   TEST_CASE("download_file - test mode")
   {
     // Set test mode
-    ::setenv("PIXELLIB_TEST_MODE", "1", 1);
+    set_env_var("PIXELLIB_TEST_MODE", "1");
 
     ::std::string test_file = "build/test_download.txt";
     auto result = pixellib::core::network::Network::download_file("http://example.com/test.txt", test_file);
@@ -132,7 +155,7 @@ TEST_SUITE("Network Module")
 
     // Clean up
     ::std::remove(test_file.c_str());
-    ::unsetenv("PIXELLIB_TEST_MODE");
+    unset_env_var("PIXELLIB_TEST_MODE");
   }
 
   TEST_CASE("HTTP operations")
