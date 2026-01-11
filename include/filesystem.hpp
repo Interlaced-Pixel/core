@@ -29,18 +29,13 @@
 #include <ctime>
 #include <fstream>
 #include <ios>
-#include <limits.h>
 #include <sstream>
 #include <string>
-#include <sys/dirent.h>
 #include <sys/stat.h>
-#include <sys/syslimits.h>
 #include <vector>
 
 #ifdef _WIN32
-#ifdef HAVE_SYS_DIRENT_H
-#include <sys/dirent.h>
-#endif #include < io.h>
+#include <io.h>
 #include <windows.h>
 #ifndef S_ISDIR
 #define S_ISDIR(mode) (((mode) & S_IFMT) == S_IFDIR)
@@ -52,6 +47,11 @@
 #else
 #include <dirent.h>
 #include <unistd.h>
+#ifdef __APPLE__
+#include <sys/syslimits.h>
+#else
+#include <limits.h>
+#endif
 #define MKDIR(path, mode) mkdir(path, mode)
 #endif
 
