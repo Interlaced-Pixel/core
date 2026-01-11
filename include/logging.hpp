@@ -406,12 +406,14 @@ public:
  * worker thread. Messages are queued up to `max_queue_size`; additional
  * messages beyond that limit are dropped.
  */
-class AsyncLogSink : public LogSink {
+class AsyncLogSink : public LogSink
+{
 public:
-  enum class DropPolicy {
+  enum class DropPolicy
+  {
     DROP_OLDEST, // remove oldest message to make room
     DROP_NEWEST, // drop the incoming message
-    BLOCK         // block caller until space is available (with timeout)
+    BLOCK        // block caller until space is available (with timeout)
   };
 
 private:
@@ -426,56 +428,65 @@ private:
   std::atomic<bool> running_;
   std::atomic<size_t> dropped_count_;
 
-  void worker_loop() {
+  void worker_loop()
+  {
     std::unique_lock<std::mutex> lock(mutex_);
-    for (;;) {
+    for (;;)
+    {
       cv_.wait(lock, [&] { return !running_ || !queue_.empty(); });
-      if (!running_ && queue_.empty()) {
+      if (!running_ && queue_.empty())
+      {
         break;
       }
-      while (!queue_.empty()) {
+      while (!queue_.empty())
+      {
         std::string msg = std::move(queue_.front());
         queue_.pop_front();
         lock.unlock();
-        try {
-          if (inner_) inner_->write(msg);
-        } catch (...) {
+        try
+        {
+          if (inner_)
+            inner_->write(msg);
+        }
+        catch (...)
+        {
           // swallow exceptions from inner sink to avoid terminating the worker
           std::cerr << "AsyncLogSink inner sink write failed" << std::endl;
         }
         lock.lock();
-        if (queue_.empty()) cv_.notify_all();
+        if (queue_.empty())
+          cv_.notify_all();
       }
     }
   }
 
 public:
-  AsyncLogSink(std::unique_ptr<LogSink> inner, size_t max_queue_size = 1024,
-               DropPolicy policy = DropPolicy::DROP_NEWEST,
-               std::chrono::milliseconds block_timeout = std::chrono::milliseconds(100))
-      : inner_(std::move(inner)),
-        max_queue_size_(max_queue_size),
-        policy_(policy),
-        block_timeout_(block_timeout),
-        running_(true),
-        dropped_count_(0) {
+  AsyncLogSink(std::unique_ptr<LogSink> inner, size_t max_queue_size = 1024, DropPolicy policy = DropPolicy::DROP_NEWEST, std::chrono::milliseconds block_timeout = std::chrono::milliseconds(100))
+      : inner_(std::move(inner)), max_queue_size_(max_queue_size), policy_(policy), block_timeout_(block_timeout), running_(true), dropped_count_(0)
+  {
     worker_ = std::thread(&AsyncLogSink::worker_loop, this);
   }
 
-  ~AsyncLogSink() override {
+  ~AsyncLogSink() override
+  {
     running_ = false;
     cv_.notify_all();
-    if (worker_.joinable()) worker_.join();
+    if (worker_.joinable())
+      worker_.join();
     size_t dropped = dropped_count_.load();
-    if (dropped > 0) {
+    if (dropped > 0)
+    {
       std::cerr << "AsyncLogSink dropped " << dropped << " messages" << std::endl;
     }
   }
 
-  void write(const std::string &message) override {
+  void write(const std::string &message) override
+  {
     std::unique_lock<std::mutex> lock(mutex_);
-    if (queue_.size() >= max_queue_size_) {
-      switch (policy_) {
+    if (queue_.size() >= max_queue_size_)
+    {
+      switch (policy_)
+      {
       case DropPolicy::DROP_OLDEST:
         // remove oldest and insert; count as dropped
         queue_.pop_front();
@@ -486,9 +497,11 @@ public:
       case DropPolicy::DROP_NEWEST:
         ++dropped_count_;
         return;
-      case DropPolicy::BLOCK: {
+      case DropPolicy::BLOCK:
+      {
         // Wait for space up to timeout
-        if (!cv_.wait_for(lock, block_timeout_, [&] { return queue_.size() < max_queue_size_; })) {
+        if (!cv_.wait_for(lock, block_timeout_, [&] { return queue_.size() < max_queue_size_; }))
+        {
           ++dropped_count_;
           return;
         }
@@ -498,32 +511,41 @@ public:
         return;
       }
       }
-    } else {
+    }
+    else
+    {
       queue_.push_back(message);
       cv_.notify_one();
     }
   }
 
   // Introspection helpers
-  size_t dropped_count() const { return dropped_count_.load(); }
+  size_t dropped_count() const
+  {
+    return dropped_count_.load();
+  }
 
   // Return current queued messages (approximate; locked)
-  size_t queue_size() const {
+  size_t queue_size() const
+  {
     std::lock_guard<std::mutex> lock(mutex_);
     return queue_.size();
   }
 
   // Flush all queued messages to the inner sink
-  void flush() {
+  void flush()
+  {
     std::unique_lock<std::mutex> lock(mutex_);
     cv_.wait(lock, [&] { return queue_.empty(); });
   }
 
   // Shutdown the async sink, draining remaining messages
-  void shutdown() {
+  void shutdown()
+  {
     running_ = false;
     cv_.notify_all();
-    if (worker_.joinable()) worker_.join();
+    if (worker_.joinable())
+      worker_.join();
   }
 };
 
@@ -532,37 +554,47 @@ public:
 } // namespace pixellib
 
 // Global thread-local log context storage
-namespace {
-  inline std::unordered_map<std::string, std::string>& get_log_context() {
-    thread_local std::unordered_map<std::string, std::string> context;
-    return context;
-  }
+namespace
+{
+inline std::unordered_map<std::string, std::string> &get_log_context()
+{
+  thread_local std::unordered_map<std::string, std::string> context;
+  return context;
 }
+} // namespace
 
 /**
  * @brief Thread-local storage for log context
  */
-namespace pixellib {
-namespace core {
-namespace logging {
-namespace LogContextStorage {
-  inline void set(const std::string &key, const std::string &value) {
-    get_log_context()[key] = value;
-  }
-
-  inline void remove(const std::string &key) {
-    get_log_context().erase(key);
-  }
-
-  inline std::string get(const std::string &key) {
-    auto it = get_log_context().find(key);
-    return it != get_log_context().end() ? it->second : "";
-  }
-
-  inline const std::unordered_map<std::string, std::string> &get_all() {
-    return get_log_context();
-  }
+namespace pixellib
+{
+namespace core
+{
+namespace logging
+{
+namespace LogContextStorage
+{
+inline void set(const std::string &key, const std::string &value)
+{
+  get_log_context()[key] = value;
 }
+
+inline void remove(const std::string &key)
+{
+  get_log_context().erase(key);
+}
+
+inline std::string get(const std::string &key)
+{
+  auto it = get_log_context().find(key);
+  return it != get_log_context().end() ? it->second : "";
+}
+
+inline const std::unordered_map<std::string, std::string> &get_all()
+{
+  return get_log_context();
+}
+} // namespace LogContextStorage
 
 /**
  * @brief RAII helper for log context management
