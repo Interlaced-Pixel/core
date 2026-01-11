@@ -31,6 +31,38 @@ static void unset_env_var(const char *name)
 #endif
 }
 
+// Helper to save and restore environment variable
+class EnvVarGuard
+{
+private:
+  std::string name_;
+  std::string original_value_;
+  bool had_value_;
+
+public:
+  explicit EnvVarGuard(const char *name) : name_(name), had_value_(false)
+  {
+    const char *val = std::getenv(name);
+    if (val != nullptr)
+    {
+      original_value_ = val;
+      had_value_ = true;
+    }
+  }
+
+  ~EnvVarGuard()
+  {
+    if (had_value_)
+    {
+      set_env_var(name_.c_str(), original_value_.c_str());
+    }
+    else
+    {
+      unset_env_var(name_.c_str());
+    }
+  }
+};
+
 TEST_SUITE("Network Module")
 {
   TEST_CASE("NetworkResult")
@@ -56,7 +88,8 @@ TEST_SUITE("Network Module")
 
   TEST_CASE("ResolveHostnameTest")
   {
-    // Set test mode
+    // Set test mode, preserving original value
+    EnvVarGuard guard("PIXELLIB_TEST_MODE");
     set_env_var("PIXELLIB_TEST_MODE", "1");
 
     auto result1 = pixellib::core::network::Network::resolve_hostname("localhost");
@@ -78,9 +111,6 @@ TEST_SUITE("Network Module")
     CHECK(result4.success == true);
     CHECK(result4.error_code == 0);
     CHECK(result4.message == "127.0.0.1");
-
-    // Clean up
-    unset_env_var("PIXELLIB_TEST_MODE");
   }
 
   TEST_CASE("HostReachable")
@@ -93,16 +123,14 @@ TEST_SUITE("Network Module")
 
   TEST_CASE("HostReachableTest")
   {
-    // Set test mode
+    // Set test mode, preserving original value
+    EnvVarGuard guard("PIXELLIB_TEST_MODE");
     set_env_var("PIXELLIB_TEST_MODE", "1");
 
     auto result = pixellib::core::network::Network::is_host_reachable("example.com");
     CHECK(result.success == true);
     CHECK(result.error_code == 0);
     CHECK(result.message == "Host is reachable (test mode)");
-
-    // Clean up
-    unset_env_var("PIXELLIB_TEST_MODE");
   }
 
   TEST_CASE("DownloadEmpty")
@@ -135,7 +163,8 @@ TEST_SUITE("Network Module")
 
   TEST_CASE("DownloadTest")
   {
-    // Set test mode
+    // Set test mode, preserving original value
+    EnvVarGuard guard("PIXELLIB_TEST_MODE");
     set_env_var("PIXELLIB_TEST_MODE", "1");
 
     ::std::string test_file = "build/test_download.txt";
@@ -155,7 +184,6 @@ TEST_SUITE("Network Module")
 
     // Clean up
     ::std::remove(test_file.c_str());
-    unset_env_var("PIXELLIB_TEST_MODE");
   }
 
   TEST_CASE("Http")
@@ -506,44 +534,44 @@ TEST_SUITE("Test Helper Methods")
 
   TEST_CASE("UrlEncodeEdgeCases")
   {
-    // The current implementation is a placeholder that returns the input unchanged
-    CHECK(pixellib::core::network::Network::url_encode("hello+world") == "hello+world");
-    CHECK(pixellib::core::network::Network::url_encode("hello&world") == "hello&world");
-    CHECK(pixellib::core::network::Network::url_encode("hello=world") == "hello=world");
-    CHECK(pixellib::core::network::Network::url_encode("hello%world") == "hello%world");
-    CHECK(pixellib::core::network::Network::url_encode("hello#world") == "hello#world");
-    CHECK(pixellib::core::network::Network::url_encode("hello?world") == "hello?world");
-    CHECK(pixellib::core::network::Network::url_encode("hello/world") == "hello/world");
-    CHECK(pixellib::core::network::Network::url_encode("hello@world") == "hello@world");
-    CHECK(pixellib::core::network::Network::url_encode("hello$world") == "hello$world");
+    // Test special characters that should be encoded
+    CHECK(pixellib::core::network::Network::url_encode("hello+world") == "hello%2Bworld");
+    CHECK(pixellib::core::network::Network::url_encode("hello&world") == "hello%26world");
+    CHECK(pixellib::core::network::Network::url_encode("hello=world") == "hello%3Dworld");
+    CHECK(pixellib::core::network::Network::url_encode("hello%world") == "hello%25world");
+    CHECK(pixellib::core::network::Network::url_encode("hello#world") == "hello%23world");
+    CHECK(pixellib::core::network::Network::url_encode("hello?world") == "hello%3Fworld");
+    CHECK(pixellib::core::network::Network::url_encode("hello/world") == "hello%2Fworld");
+    CHECK(pixellib::core::network::Network::url_encode("hello@world") == "hello%40world");
+    CHECK(pixellib::core::network::Network::url_encode("hello$world") == "hello%24world");
 
     // Test empty string
     CHECK(pixellib::core::network::Network::url_encode("") == "");
 
-    // Test already encoded characters (placeholder doesn't double-encode)
-    CHECK(pixellib::core::network::Network::url_encode("hello%20world") == "hello%20world");
+    // Test already encoded characters (should double-encode)
+    CHECK(pixellib::core::network::Network::url_encode("hello%20world") == "hello%2520world");
   }
 
   TEST_CASE("UrlDecodeEdgeCases")
   {
-    // The current implementation is a placeholder that returns the input unchanged
-    CHECK(pixellib::core::network::Network::url_decode("hello%2Bworld") == "hello%2Bworld");
-    CHECK(pixellib::core::network::Network::url_decode("hello%26world") == "hello%26world");
-    CHECK(pixellib::core::network::Network::url_decode("hello%3Dworld") == "hello%3Dworld");
-    CHECK(pixellib::core::network::Network::url_decode("hello%25world") == "hello%25world");
-    CHECK(pixellib::core::network::Network::url_decode("hello%23world") == "hello%23world");
-    CHECK(pixellib::core::network::Network::url_decode("hello%3Fworld") == "hello%3Fworld");
-    CHECK(pixellib::core::network::Network::url_decode("hello%2Fworld") == "hello%2Fworld");
-    CHECK(pixellib::core::network::Network::url_decode("hello%40world") == "hello%40world");
-    CHECK(pixellib::core::network::Network::url_decode("hello%24world") == "hello%24world");
+    // Test decoding special characters
+    CHECK(pixellib::core::network::Network::url_decode("hello%2Bworld") == "hello+world");
+    CHECK(pixellib::core::network::Network::url_decode("hello%26world") == "hello&world");
+    CHECK(pixellib::core::network::Network::url_decode("hello%3Dworld") == "hello=world");
+    CHECK(pixellib::core::network::Network::url_decode("hello%25world") == "hello%world");
+    CHECK(pixellib::core::network::Network::url_decode("hello%23world") == "hello#world");
+    CHECK(pixellib::core::network::Network::url_decode("hello%3Fworld") == "hello?world");
+    CHECK(pixellib::core::network::Network::url_decode("hello%2Fworld") == "hello/world");
+    CHECK(pixellib::core::network::Network::url_decode("hello%40world") == "hello@world");
+    CHECK(pixellib::core::network::Network::url_decode("hello%24world") == "hello$world");
 
-    // Plus sign to space conversion (placeholder doesn't convert)
-    CHECK(pixellib::core::network::Network::url_decode("hello+world") == "hello+world");
+    // Plus sign to space conversion
+    CHECK(pixellib::core::network::Network::url_decode("hello+world") == "hello world");
 
     // Test empty string
     CHECK(pixellib::core::network::Network::url_decode("") == "");
 
-    // Test incomplete percent encoding (placeholder doesn't modify)
+    // Test incomplete percent encoding (should be handled gracefully)
     CHECK(pixellib::core::network::Network::url_decode("hello%2") == "hello%2");
     CHECK(pixellib::core::network::Network::url_decode("hello%") == "hello%");
   }
@@ -744,7 +772,8 @@ TEST_SUITE("Test Helper Methods")
     CHECK(empty_result.error_code == 1);
     CHECK(empty_result.message == "Hostname is empty");
 
-    // Set test mode for deterministic behavior
+    // Set test mode for deterministic behavior, preserving original value
+    EnvVarGuard guard("PIXELLIB_TEST_MODE");
     set_env_var("PIXELLIB_TEST_MODE", "1");
 
     // Test localhost variations in test mode
@@ -763,9 +792,6 @@ TEST_SUITE("Test Helper Methods")
     auto other_host = Network::resolve_hostname("example.com");
     CHECK(other_host.success == true);
     CHECK(other_host.message == "127.0.0.1");
-
-    // Clean up
-    unset_env_var("PIXELLIB_TEST_MODE");
   }
 
   TEST_CASE("HostReachableEdgeCases")
@@ -778,14 +804,12 @@ TEST_SUITE("Test Helper Methods")
     CHECK(empty_result.error_code == 1);
     CHECK(empty_result.message == "Host is empty");
 
-    // Set test mode for deterministic behavior
+    // Set test mode for deterministic behavior, preserving original value
+    EnvVarGuard guard("PIXELLIB_TEST_MODE");
     set_env_var("PIXELLIB_TEST_MODE", "1");
 
     auto test_result = Network::is_host_reachable("example.com");
     CHECK(test_result.success == true);
     CHECK(test_result.message == "Host is reachable (test mode)");
-
-    // Clean up
-    unset_env_var("PIXELLIB_TEST_MODE");
   }
 }
