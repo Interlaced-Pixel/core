@@ -2,36 +2,33 @@
 #include "../third-party/doctest/doctest.h"
 
 #include <algorithm>
-#include <cstdlib>
-#include <ctime>
+#include <random>
 #include <string>
 #include <vector>
 
 TEST_SUITE("filesystem_module")
 {
-  using namespace pixellib::core::filesystem;
+  using pixellib::core::filesystem::FileSystem;
 
   static std::string make_temp_dir()
   {
     std::string base = FileSystem::temp_directory_path();
     if (base.empty())
+    {
       return std::string();
+    }
 
     if (!base.empty() && (base.back() == '/' || base.back() == '\\'))
     {
       base.pop_back();
     }
 
-    static bool seeded = false;
-    if (!seeded)
-    {
-      std::srand(static_cast<unsigned int>(std::time(nullptr)));
-      seeded = true;
-    }
+    static std::mt19937 rng(std::random_device{}());
+    std::uniform_int_distribution<int> dist(0, 99999999);
 
     for (int i = 0; i < 100; ++i)
     {
-      std::string dir = base + "/pixellib_test_" + std::to_string(std::rand());
+      std::string dir = base + "/pixellib_test_" + std::to_string(dist(rng));
       if (!FileSystem::exists(dir))
       {
         if (FileSystem::create_directories(dir))
