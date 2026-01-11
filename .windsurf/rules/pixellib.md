@@ -77,4 +77,5 @@ pixelLib is a modern C++23 library providing core utilities for filesystem opera
 - C++23 features available (concepts, ranges, etc.)
 - Cross-platform compatibility required
 - Comprehensive test coverage expected
-
+- ALWAYS read `.github/*.instructions` before making changes
+- ALWAYS fix lint warnings before submitting a code change
