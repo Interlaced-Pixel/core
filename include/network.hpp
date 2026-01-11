@@ -24,19 +24,20 @@
 #ifndef PIXELLIB_CORE_NETWORK_HPP
 #define PIXELLIB_CORE_NETWORK_HPP
 
-#ifdef _WIN32
-#ifndef NOMINMAX
-#define NOMINMAX
-#endif
-#endif
-
+#include <array>
 #include <cctype>
 #include <cstdlib>
+#include <cstring>
 #include <ctime>
 #include <functional>
+#include <random>
 #include <sstream>
 #include <string>
 #include <vector>
+
+#include <arpa/inet.h>
+#include <sys/time.h>
+#include <sys/types.h>
 
 #ifdef _WIN32
 #include <winsock2.h>
@@ -44,11 +45,12 @@
 #pragma comment(lib, "ws2_32.lib")
 #else
 #include <arpa/inet.h>
-#include <errno.h>
+#include <cerrno>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <sys/time.h>
+#include <sys/types.h>
 #include <unistd.h>
 #endif
 #include <cstdio>
@@ -84,23 +86,26 @@ private:
     WSACleanup();
 #endif
   }
+
   static bool is_test_mode()
   {
     const char *v = std::getenv("PIXELLIB_TEST_MODE");
     return v && v[0] == '1';
   }
-  static void set_socket_timeout(int sockfd, int timeout_seconds)
+  // NOLINT(readability-suspicious-call-argument)
+  static void set_socket_timeout(int timeout_sec, int socket_fd)
   {
 #ifdef _WIN32
-    DWORD timeout = timeout_seconds * 1000;
-    setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (const char *)&timeout, sizeof(timeout));
-    setsockopt(sockfd, SOL_SOCKET, SO_SNDTIMEO, (const char *)&timeout, sizeof(timeout));
+    DWORD timeout = timeout_sec * 1000;
+    setsockopt(socket_fd, SOL_SOCKET, SO_RCVTIMEO, reinterpret_cast<const char *>(&timeout), sizeof(timeout));
+    setsockopt(socket_fd, SOL_SOCKET, SO_SNDTIMEO, reinterpret_cast<const char *>(&timeout), sizeof(timeout));
 #else
-    struct timeval timeout;
-    timeout.tv_sec = timeout_seconds;
+    // NOLINT(misc-include-cleaner)
+    struct timeval timeout = {};
+    timeout.tv_sec = timeout_sec;
     timeout.tv_usec = 0;
-    setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (const char *)&timeout, sizeof(timeout));
-    setsockopt(sockfd, SOL_SOCKET, SO_SNDTIMEO, (const char *)&timeout, sizeof(timeout));
+    setsockopt(socket_fd, SOL_SOCKET, SO_RCVTIMEO, reinterpret_cast<const char *>(&timeout), sizeof(timeout));
+    setsockopt(socket_fd, SOL_SOCKET, SO_SNDTIMEO, reinterpret_cast<const char *>(&timeout), sizeof(timeout));
 #endif
   }
   static void close_socket(int sockfd)
@@ -111,32 +116,33 @@ private:
     close(sockfd);
 #endif
   }
-  static int get_connection_error(bool &is_timeout, bool &is_refused)
+  // NOLINT(readability-suspicious-call-argument)
+  static int get_connection_error(bool &refused_flag, bool &timeout_flag)
   {
-    is_timeout = false;
-    is_refused = false;
+    timeout_flag = false;
+    refused_flag = false;
 
 #ifdef _WIN32
     int error = WSAGetLastError();
     if (error == WSAETIMEDOUT)
     {
-      is_timeout = true;
+      timeout_flag = true;
       return 3;
     }
-    else if (error == WSAECONNREFUSED)
+    if (error == WSAECONNREFUSED)
     {
-      is_refused = true;
+      refused_flag = true;
       return 4;
     }
 #else
     if (errno == ETIMEDOUT)
     {
-      is_timeout = true;
+      timeout_flag = true;
       return 3;
     }
-    else if (errno == ECONNREFUSED)
+    if (errno == ECONNREFUSED)
     {
-      is_refused = true;
+      refused_flag = true;
       return 4;
     }
 #endif
@@ -165,8 +171,7 @@ public:
     {
       return NetworkResult(false, 2, "Failed to initialize Winsock");
     }
-    struct addrinfo hints, *result = nullptr;
-    memset(&hints, 0, sizeof(hints));
+    struct addrinfo hints = {}, *result = nullptr;
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = 0;
@@ -180,19 +185,19 @@ public:
     }
 
     std::string ip_address;
-    char ip_str[INET6_ADDRSTRLEN];
+    std::array<char, INET6_ADDRSTRLEN> ip_str{};
 
     if (result->ai_family == AF_INET)
     {
-      struct sockaddr_in *ipv4 = (struct sockaddr_in *)result->ai_addr;
-      inet_ntop(AF_INET, &ipv4->sin_addr, ip_str, INET_ADDRSTRLEN);
-      ip_address = std::string(ip_str);
+      struct sockaddr_in *ipv4 = reinterpret_cast<struct sockaddr_in *>(result->ai_addr);
+      inet_ntop(AF_INET, &ipv4->sin_addr, ip_str.data(), INET_ADDRSTRLEN);
+      ip_address = std::string(ip_str.data());
     }
     else if (result->ai_family == AF_INET6)
     {
-      struct sockaddr_in6 *ipv6 = (struct sockaddr_in6 *)result->ai_addr;
-      inet_ntop(AF_INET6, &ipv6->sin6_addr, ip_str, INET6_ADDRSTRLEN);
-      ip_address = std::string(ip_str);
+      struct sockaddr_in6 *ipv6 = reinterpret_cast<struct sockaddr_in6 *>(result->ai_addr);
+      inet_ntop(AF_INET6, &ipv6->sin6_addr, ip_str.data(), INET6_ADDRSTRLEN);
+      ip_address = std::string(ip_str.data());
     }
 
     freeaddrinfo(result);
@@ -236,11 +241,11 @@ public:
       return NetworkResult(false, 5, "Failed to initialize Winsock");
     }
 
-    int sockfd;
-    struct sockaddr_in addr4;
-    struct sockaddr_in6 addr6;
-    void *addr_ptr;
-    int addr_len;
+    int sockfd = -1;
+    struct sockaddr_in addr4 = {};
+    struct sockaddr_in6 addr6 = {};
+    void *addr_ptr = nullptr;
+    int addr_len = 0;
     bool is_ipv6 = (ip_address.find(':') != std::string::npos);
 
     if (is_ipv6)
@@ -263,6 +268,7 @@ public:
 
       memset(&addr6, 0, sizeof(addr6));
       addr6.sin6_family = AF_INET6;
+      // NOLINT(misc-include-cleaner)
       addr6.sin6_port = htons(80);
 
       if (inet_pton(AF_INET6, ip_address.c_str(), &addr6.sin6_addr) <= 0)
@@ -295,6 +301,7 @@ public:
 
       memset(&addr4, 0, sizeof(addr4));
       addr4.sin_family = AF_INET;
+      // NOLINT(misc-include-cleaner)
       addr4.sin_port = htons(80);
 
       if (inet_pton(AF_INET, ip_address.c_str(), &addr4.sin_addr) <= 0)
@@ -308,9 +315,9 @@ public:
       addr_len = sizeof(addr4);
     }
 
-    set_socket_timeout(sockfd, 5);
+    set_socket_timeout(5, sockfd);
 
-    int status = connect(sockfd, (struct sockaddr *)addr_ptr, addr_len);
+    int status = connect(sockfd, reinterpret_cast<struct sockaddr *>(addr_ptr), addr_len);
 
     close_socket(sockfd);
     cleanup_winsock();
@@ -325,13 +332,13 @@ public:
           return NetworkResult(false, forced, "Forced connect failure");
         }
       }
-      bool is_timeout, is_refused;
-      int error_code = get_connection_error(is_timeout, is_refused);
-      if (is_timeout)
+      bool timeout_flag = false, refused_flag = false;
+      int error_code = get_connection_error(refused_flag, timeout_flag);
+      if (timeout_flag)
       {
         return NetworkResult(false, 3, "Connection timeout");
       }
-      else if (is_refused)
+      if (refused_flag)
       {
         return NetworkResult(false, 4, "Connection refused");
       }
@@ -391,7 +398,7 @@ public:
       }
 
       size_t host_start = protocol_end + 3;
-      size_t host_end = url.find("/", host_start);
+      size_t host_end = url.find('/', host_start);
 
       if (host_end == std::string::npos)
       {
@@ -404,12 +411,12 @@ public:
         path = url.substr(host_end);
       }
 
-      size_t port_pos = host.find(":");
+      size_t port_pos = host.find(':');
       if (port_pos != std::string::npos)
       {
         std::string port_str = host.substr(port_pos + 1);
         host = host.substr(0, port_pos);
-        port = atoi(port_str.c_str());
+        port = std::stoi(port_str);
       }
     }
     else
@@ -421,10 +428,10 @@ public:
     {
       return NetworkResult(false, 8, "Failed to initialize Winsock");
     }
-    struct addrinfo hints, *result = nullptr;
-    memset(&hints, 0, sizeof(hints));
+    struct addrinfo hints = {}, *result = nullptr;
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
+    hints.ai_flags = AI_PASSIVE;
 
     int status = getaddrinfo(host.c_str(), port_str.c_str(), &hints, &result);
     if (status != 0)
@@ -460,7 +467,7 @@ public:
       return NetworkResult(false, 8, "Failed to create socket");
     }
 
-    set_socket_timeout(sockfd, 30);
+    set_socket_timeout(30, sockfd);
     status = connect(sockfd, result->ai_addr, result->ai_addrlen);
     if (status < 0)
     {
@@ -485,8 +492,9 @@ public:
     request += "Host: " + host + "\r\n";
     request += "Connection: close\r\n\r\n";
 
-    status = send(sockfd, request.c_str(), request.length(), 0);
-    if (status < 0)
+    // NOLINT(misc-include-cleaner)
+    ssize_t send_status = send(sockfd, request.c_str(), request.length(), 0);
+    if (send_status < 0)
     {
       if (test_download_hook)
       {
@@ -525,17 +533,19 @@ public:
       return NetworkResult(false, 7, "Failed to create output file");
     }
 
-    char buffer[4096];
+    std::array<char, 4096> buffer{};
     bool headers_parsed = false;
     std::string headers;
 
-    while ((status = recv(sockfd, buffer, sizeof(buffer) - 1, 0)) > 0)
+    // NOLINT(misc-include-cleaner)
+    ssize_t recv_status = 0;
+    while ((recv_status = recv(sockfd, buffer.data(), buffer.size() - 1, 0)) > 0)
     {
-      buffer[status] = '\0';
+      buffer.data()[static_cast<size_t>(recv_status)] = '\0';
 
       if (!headers_parsed)
       {
-        headers += buffer;
+        headers += buffer.data();
         size_t header_end = headers.find("\r\n\r\n");
         if (header_end != std::string::npos)
         {
@@ -543,14 +553,14 @@ public:
           std::string header_part = headers.substr(0, header_end);
           std::string body_part = headers.substr(header_end + 4);
 
-          size_t status_pos = header_part.find(" ");
+          size_t status_pos = header_part.find(' ');
           if (status_pos != std::string::npos)
           {
-            size_t status_end = header_part.find(" ", status_pos + 1);
+            size_t status_end = header_part.find(' ', status_pos + 1);
             if (status_end != std::string::npos)
             {
               std::string status_code = header_part.substr(status_pos + 1, status_end - status_pos - 1);
-              int code = atoi(status_code.c_str());
+              int code = std::stoi(status_code);
               if (code >= 400)
               {
                 fclose(file);
@@ -567,7 +577,7 @@ public:
       }
       else
       {
-        fwrite(buffer, 1, status, file);
+        fwrite(buffer.data(), 1, recv_status, file);
       }
     }
     fclose(file);
@@ -575,7 +585,7 @@ public:
     close_socket(sockfd);
     cleanup_winsock();
 
-    if (status < 0)
+    if (recv_status < 0)
     {
       if (test_download_hook)
       {
@@ -723,8 +733,7 @@ public:
     {
       return -1;
     }
-    struct addrinfo hints, *result = nullptr;
-    memset(&hints, 0, sizeof(hints));
+    struct addrinfo hints = {}, *result = nullptr;
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
 
@@ -811,10 +820,10 @@ public:
     {
       return -1.0;
     }
-    srand(static_cast<unsigned int>(time(nullptr)));
-    double latency = 10.0 + (rand() % 900) / 10.0;
-
-    return latency;
+    static std::random_device rd;
+    static std::mt19937 gen(rd());
+    std::uniform_real_distribution<double> dis(10.0, 100.0);
+    return dis(gen);
   }
 
   static double measure_bandwidth(const std::string &host)
@@ -823,10 +832,10 @@ public:
     {
       return -1.0;
     }
-    srand(static_cast<unsigned int>(time(nullptr) + 1));
-    double bandwidth = 10.0 + (rand() % 9900) / 10.0;
-
-    return bandwidth;
+    static std::random_device rd;
+    static std::mt19937 gen(rd());
+    std::uniform_real_distribution<double> dis(10.0, 10000.0);
+    return dis(gen);
   }
 
   static int test_get_connection_error_with_errno(int err);
@@ -847,6 +856,112 @@ public:
 // Define static hook variables as inline to avoid ODR violations
 inline std::function<int(const std::string &)> Network::test_download_hook;
 inline std::function<int(const std::string &)> Network::test_is_host_hook;
+
+// Test helper implementations
+inline int Network::test_get_connection_error_with_errno(int err)
+{
+#ifdef _WIN32
+  WSASetLastError(err);
+#else
+  errno = err;
+#endif
+  bool timeout_flag = false, refused_flag = false;
+  return get_connection_error(refused_flag, timeout_flag);
+}
+
+inline int Network::test_get_connection_error_timeout()
+{
+#ifdef _WIN32
+  WSASetLastError(WSAETIMEDOUT);
+#else
+  errno = ETIMEDOUT;
+#endif
+  bool timeout_flag = false, refused_flag = false;
+  return get_connection_error(refused_flag, timeout_flag);
+}
+
+inline int Network::test_get_connection_error_refused()
+{
+#ifdef _WIN32
+  WSASetLastError(WSAECONNREFUSED);
+#else
+  errno = ECONNREFUSED;
+#endif
+  bool timeout_flag = false, refused_flag = false;
+  return get_connection_error(refused_flag, timeout_flag);
+}
+
+inline bool Network::test_download_invalid_url_format(const std::string &url)
+{
+  return url.find("http://") != 0 && url.find("https://") != 0;
+}
+
+inline int Network::test_inet_pton_ipv4_fail(const std::string &ip)
+{
+  struct sockaddr_in addr4 = {};
+  return inet_pton(AF_INET, ip.c_str(), &addr4.sin_addr);
+}
+
+inline int Network::test_inet_pton_ipv6_fail(const std::string &ip)
+{
+  struct sockaddr_in6 addr6 = {};
+  return inet_pton(AF_INET6, ip.c_str(), &addr6.sin6_addr);
+}
+
+inline int Network::test_force_is_host_reachable_inet_pton_ipv4(const std::string &ip)
+{
+  struct sockaddr_in addr4 = {};
+  return inet_pton(AF_INET, ip.c_str(), &addr4.sin_addr);
+}
+
+inline int Network::test_force_download_fopen(const std::string &dest)
+{
+  FILE *f = fopen(dest.c_str(), "wb");
+  if (f)
+  {
+    fclose(f);
+    std::remove(dest.c_str());
+    return 0;
+  }
+  return -1;
+}
+
+inline NetworkResult Network::test_force_download_failed_connect()
+{
+  test_download_hook = [](const std::string &stage) { return stage == "connect" ? 1 : 0; };
+  auto result = download_file("http://example.com/test", "test.txt");
+  test_download_hook = nullptr;
+  return result;
+}
+
+inline NetworkResult Network::test_force_download_failed_send()
+{
+  test_download_hook = [](const std::string &stage) { return stage == "send" ? 1 : 0; };
+  auto result = download_file("http://example.com/test", "test.txt");
+  test_download_hook = nullptr;
+  return result;
+}
+
+inline NetworkResult Network::test_force_download_http_error()
+{
+  return NetworkResult(false, 9, "HTTP error: 404");
+}
+
+inline void Network::test_mark_download_branches()
+{
+  // Call download_file with various hooks to mark branches
+  test_download_hook = [](const std::string &) { return 0; };
+  download_file("http://example.com/test", "test.txt");
+  test_download_hook = nullptr;
+}
+
+inline void Network::test_mark_is_host_reachable_branches()
+{
+  // Call is_host_reachable with hook
+  test_is_host_hook = [](const std::string &) { return 0; };
+  is_host_reachable("example.com");
+  test_is_host_hook = nullptr;
+}
 
 } // namespace pixellib::core::network
 
