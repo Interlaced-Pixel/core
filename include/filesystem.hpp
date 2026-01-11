@@ -38,8 +38,9 @@
 #include <vector>
 
 #ifdef _WIN32
-#include <direct.h>
-#include <io.h>
+#ifdef HAVE_SYS_DIRENT_H
+#include <sys/dirent.h>
+#endif #include < io.h>
 #include <windows.h>
 #ifndef S_ISDIR
 #define S_ISDIR(mode) (((mode) & S_IFMT) == S_IFDIR)

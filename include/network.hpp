@@ -30,8 +30,6 @@
 #include <functional>
 #include <sstream>
 #include <string>
-#include <sys/_endian.h>
-#include <sys/_types/_timeval.h>
 #include <vector>
 
 #ifdef _WIN32
