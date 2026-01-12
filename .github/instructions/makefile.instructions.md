@@ -13,10 +13,11 @@ The Makefile is the central build system for your project. When modifying it, fo
 4. **Default to modern C++** - Keep `STD ?= c++23` as the standard
 
 ### Key Targets (Do Not Break)
-- `all` - Main target: clean, build (if exists), build_test (if exists), compile-commands, coverage
+- `all` - Main target: clean, build (if exists), build-test (if exists), compile-commands, coverage
 - `build` - Build the main binary
-- `build_test` - Build the test binary with coverage flags
-- `run-tests` - Execute the test binary
+- `run` - Run the main binary
+- `build-test` - Build the test binary with coverage flags
+- `run-test` - Run the test binary
 - `coverage` - Generate coverage reports (HTML and LCOV)
 - `clean` - Remove build artifacts
 - `compile-commands` - Generate compilation database for clangd
