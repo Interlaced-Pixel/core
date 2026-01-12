@@ -48,16 +48,12 @@
 #else
 #include <arpa/inet.h>
 #include <cerrno>
+#include <cstdio>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
-#include <sys/time.h>
-#include <sys/types.h>
 #include <unistd.h>
 #endif
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
 
 namespace pixellib::core::network
 {
@@ -67,7 +63,7 @@ struct NetworkResult
   bool success;
   int error_code;
   std::string message;
-  NetworkResult(const bool s, const int ec, std::string m) : success(s), error_code(ec), message(std::move(m)) {}
+  NetworkResult(const bool success_param, const int error_code_param, std::string message_param) : success(success_param), error_code(error_code_param), message(std::move(message_param)) {}
 };
 
 class Network
@@ -91,8 +87,8 @@ private:
 
   static bool is_test_mode()
   {
-    const char *v = std::getenv("PIXELLIB_TEST_MODE");
-    return v && v[0] == '1';
+    const char *test_mode_value = std::getenv("PIXELLIB_TEST_MODE");
+    return test_mode_value && test_mode_value[0] == '1';
   }
   // NOLINT(readability-suspicious-call-argument)
   static void set_socket_timeout(int timeout_sec, int socket_fd)
@@ -158,20 +154,20 @@ public:
   {
     if (hostname.empty())
     {
-      return NetworkResult(false, 1, "Hostname is empty");
+      return {false, 1, "Hostname is empty"};
     }
 
     if (is_test_mode())
     {
       if (hostname == "localhost" || hostname == "127.0.0.1" || hostname == "::1")
       {
-        return NetworkResult(true, 0, "127.0.0.1");
+        return {true, 0, "127.0.0.1"};
       }
-      return NetworkResult(true, 0, "127.0.0.1");
+      return {true, 0, "127.0.0.1"};
     }
     if (!initialize_winsock())
     {
-      return NetworkResult(false, 2, "Failed to initialize Winsock");
+      return {false, 2, "Failed to initialize Winsock"};
     }
     struct addrinfo hints = {}, *result = nullptr;
     hints.ai_family = AF_UNSPEC;
@@ -183,7 +179,7 @@ public:
     if (status != 0)
     {
       cleanup_winsock();
-      return NetworkResult(false, 2, "Hostname resolution failed: " + std::string(gai_strerror(status)));
+      return {false, 2, "Hostname resolution failed: " + std::string(gai_strerror(status))};
     }
 
     std::string ip_address;
@@ -207,27 +203,27 @@ public:
 
     if (ip_address.empty())
     {
-      return NetworkResult(false, 3, "No addresses found for hostname");
+      return {false, 3, "No addresses found for hostname"};
     }
 
-    return NetworkResult(true, 0, ip_address);
+    return {true, 0, ip_address};
   }
   static NetworkResult is_host_reachable(const std::string &host)
   {
     if (host.empty())
     {
-      return NetworkResult(false, 1, "Host is empty");
+      return {false, 1, "Host is empty"};
     }
 
     if (is_test_mode())
     {
-      return NetworkResult(true, 0, "Host is reachable (test mode)");
+      return {true, 0, "Host is reachable (test mode)"};
     }
 
     NetworkResult resolve_result = resolve_hostname(host);
     if (!resolve_result.success)
     {
-      return NetworkResult(false, resolve_result.error_code, resolve_result.message);
+      return {false, resolve_result.error_code, resolve_result.message};
     }
     std::string ip_address = resolve_result.message;
     if (!initialize_winsock())
@@ -237,10 +233,10 @@ public:
         int forced = test_is_host_hook("init");
         if (forced != 0)
         {
-          return NetworkResult(false, forced, "Forced winsock init failure");
+          return {false, forced, "Forced winsock init failure"};
         }
       }
-      return NetworkResult(false, 5, "Failed to initialize Winsock");
+      return {false, 5, "Failed to initialize Winsock"};
     }
 
     int sockfd = -1;
@@ -260,11 +256,11 @@ public:
           if (forced != 0)
           {
             cleanup_winsock();
-            return NetworkResult(false, forced, "Forced IPv6 socket creation failure");
+            return {false, forced, "Forced IPv6 socket creation failure"};
           }
         }
         cleanup_winsock();
-        return NetworkResult(false, 5, "Failed to create IPv6 socket");
+        return {false, 5, "Failed to create IPv6 socket"};
       }
 
       memset(&addr6, 0, sizeof(addr6));
@@ -276,7 +272,7 @@ public:
       {
         close_socket(sockfd);
         cleanup_winsock();
-        return NetworkResult(false, 2, "Invalid IPv6 address format");
+        return {false, 2, "Invalid IPv6 address format"};
       }
 
       addr_ptr = &addr6;
@@ -293,11 +289,11 @@ public:
           if (forced != 0)
           {
             cleanup_winsock();
-            return NetworkResult(false, forced, "Forced IPv4 socket creation failure");
+            return {false, forced, "Forced IPv4 socket creation failure"};
           }
         }
         cleanup_winsock();
-        return NetworkResult(false, 5, "Failed to create IPv4 socket");
+        return {false, 5, "Failed to create IPv4 socket"};
       }
 
       memset(&addr4, 0, sizeof(addr4));
@@ -309,7 +305,7 @@ public:
       {
         close_socket(sockfd);
         cleanup_winsock();
-        return NetworkResult(false, 2, "Invalid IPv4 address format");
+        return {false, 2, "Invalid IPv4 address format"};
       }
 
       addr_ptr = &addr4;
@@ -330,23 +326,23 @@ public:
         int forced = test_is_host_hook("connect");
         if (forced != 0)
         {
-          return NetworkResult(false, forced, "Forced connect failure");
+          return {false, forced, "Forced connect failure"};
         }
       }
       bool timeout_flag = false, refused_flag = false;
       int error_code = get_connection_error(refused_flag, timeout_flag);
       if (timeout_flag)
       {
-        return NetworkResult(false, 3, "Connection timeout");
+        return {false, 3, "Connection timeout"};
       }
       if (refused_flag)
       {
-        return NetworkResult(false, 4, "Connection refused");
+        return {false, 4, "Connection refused"};
       }
-      return NetworkResult(false, error_code, "General network error");
+      return {false, error_code, "General network error"};
     }
 
-    return NetworkResult(true, 0, "Host is reachable");
+    return {true, 0, "Host is reachable"};
   }
 
   static NetworkResult download_file(const std::string &url, const std::string &destination)
@@ -356,21 +352,21 @@ public:
       int forced = test_download_hook("start");
       if (forced != 0)
       {
-        return NetworkResult(false, forced, "Forced download failure");
+        return {false, forced, "Forced download failure"};
       }
     }
     if (url.empty())
     {
-      return NetworkResult(false, 1, "URL is empty");
+      return {false, 1, "URL is empty"};
     }
     if (destination.empty())
     {
-      return NetworkResult(false, 2, "Destination path is empty");
+      return {false, 2, "Destination path is empty"};
     }
 
     if (url.find("http://") != 0 && url.find("https://") != 0)
     {
-      return NetworkResult(false, 6, "Invalid URL format");
+      return {false, 6, "Invalid URL format"};
     }
 
     if (is_test_mode())
@@ -378,12 +374,12 @@ public:
       FILE *file = fopen(destination.c_str(), "wb");
       if (!file)
       {
-        return NetworkResult(false, 7, "Failed to create output file");
+        return {false, 7, "Failed to create output file"};
       }
       const char *data = "TEST FILE";
       fwrite(data, 1, std::strlen(data), file);
       fclose(file);
-      return NetworkResult(true, 0, "File downloaded successfully (test mode)");
+      return {true, 0, "File downloaded successfully (test mode)"};
     }
 
     std::string protocol, host, path;
@@ -422,12 +418,12 @@ public:
     }
     else
     {
-      return NetworkResult(false, 6, "Invalid URL format");
+      return {false, 6, "Invalid URL format"};
     }
     std::string port_str = std::to_string(port);
     if (!initialize_winsock())
     {
-      return NetworkResult(false, 8, "Failed to initialize Winsock");
+      return {false, 8, "Failed to initialize Winsock"};
     }
     struct addrinfo hints = {}, *result = nullptr;
     hints.ai_family = AF_UNSPEC;
@@ -443,11 +439,11 @@ public:
         if (forced != 0)
         {
           cleanup_winsock();
-          return NetworkResult(false, forced, "Forced getaddrinfo failure");
+          return {false, forced, "Forced getaddrinfo failure"};
         }
       }
       cleanup_winsock();
-      return NetworkResult(false, 8, "Hostname resolution failed: " + std::string(gai_strerror(status)));
+      return {false, 8, "Hostname resolution failed: " + std::string(gai_strerror(status))};
     }
 
     int sockfd = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
@@ -460,12 +456,12 @@ public:
         {
           freeaddrinfo(result);
           cleanup_winsock();
-          return NetworkResult(false, forced, "Forced socket create failure");
+          return {false, forced, "Forced socket create failure"};
         }
       }
       freeaddrinfo(result);
       cleanup_winsock();
-      return NetworkResult(false, 8, "Failed to create socket");
+      return {false, 8, "Failed to create socket"};
     }
 
     set_socket_timeout(30, sockfd);
@@ -480,13 +476,13 @@ public:
           freeaddrinfo(result);
           close_socket(sockfd);
           cleanup_winsock();
-          return NetworkResult(false, forced, "Forced connect failure");
+          return {false, forced, "Forced connect failure"};
         }
       }
       freeaddrinfo(result);
       close_socket(sockfd);
       cleanup_winsock();
-      return NetworkResult(false, 8, "Failed to connect to host");
+      return {false, 8, "Failed to connect to host"};
     }
 
     std::string request = "GET " + path + " HTTP/1.1\r\n";
@@ -505,13 +501,13 @@ public:
           freeaddrinfo(result);
           close_socket(sockfd);
           cleanup_winsock();
-          return NetworkResult(false, forced, "Forced send failure");
+          return {false, forced, "Forced send failure"};
         }
       }
       freeaddrinfo(result);
       close_socket(sockfd);
       cleanup_winsock();
-      return NetworkResult(false, 8, "Failed to send HTTP request");
+      return {false, 8, "Failed to send HTTP request"};
     }
 
     FILE *file = fopen(destination.c_str(), "wb");
@@ -525,13 +521,13 @@ public:
           freeaddrinfo(result);
           close_socket(sockfd);
           cleanup_winsock();
-          return NetworkResult(false, forced, "Forced fopen failure");
+          return {false, forced, "Forced fopen failure"};
         }
       }
       freeaddrinfo(result);
       close_socket(sockfd);
       cleanup_winsock();
-      return NetworkResult(false, 7, "Failed to create output file");
+      return {false, 7, "Failed to create output file"};
     }
 
     std::array<char, 4096> buffer{};
@@ -568,7 +564,7 @@ public:
                 freeaddrinfo(result);
                 close_socket(sockfd);
                 cleanup_winsock();
-                return NetworkResult(false, 9, "HTTP error: " + status_code);
+                return {false, 9, "HTTP error: " + status_code};
               }
             }
           }
@@ -593,13 +589,13 @@ public:
         int forced = test_download_hook("recv_error");
         if (forced != 0)
         {
-          return NetworkResult(false, forced, "Forced recv failure");
+          return {false, forced, "Forced recv failure"};
         }
       }
-      return NetworkResult(false, 8, "Network error during download");
+      return {false, 8, "Network error during download"};
     }
 
-    return NetworkResult(true, 0, "File downloaded successfully");
+    return {true, 0, "File downloaded successfully"};
   }
 
   static std::string http_get(const std::string &url)
@@ -844,15 +840,15 @@ public:
 #endif
   }
 
-  static bool is_valid_ipv4(const std::string &ip)
+  static bool is_valid_ipv4(const std::string &ip_address)
   {
-    if (ip.empty())
+    if (ip_address.empty())
     {
       return false;
     }
     std::vector<std::string> parts;
     std::string part;
-    std::istringstream iss(ip);
+    std::istringstream iss(ip_address);
 
     while (std::getline(iss, part, '.'))
     {
@@ -863,24 +859,24 @@ public:
     {
       return false;
     }
-    for (const std::string &p : parts)
+    for (const std::string &part : parts)
     {
-      if (p.empty())
+      if (part.empty())
       {
         return false;
       }
-      if (p.length() > 1 && p[0] == '0')
+      if (part.length() > 1 && part[0] == '0')
       {
         return false;
       }
-      for (char c : p)
+      for (char c : part)
       {
         if (!std::isdigit(c))
         {
           return false;
         }
       }
-      int num = std::stoi(p);
+      int num = std::stoi(part);
       if (num < 0 || num > 255)
       {
         return false;
@@ -890,19 +886,19 @@ public:
     return true;
   }
 
-  static bool is_valid_ipv6(const std::string &ip)
+  static bool is_valid_ipv6(const std::string &ip_address)
   {
-    if (ip.empty())
+    if (ip_address.empty())
     {
       return false;
     }
-    if (ip.find(':') == std::string::npos)
+    if (ip_address.find(':') == std::string::npos)
     {
       return false;
     }
-    bool has_double_colon = (ip.find("::") != std::string::npos);
+    bool has_double_colon = (ip_address.find("::") != std::string::npos);
     int colon_count = 0;
-    for (char c : ip)
+    for (char c : ip_address)
     {
       if (c == ':')
       {
@@ -916,7 +912,7 @@ public:
         return false;
       }
     }
-    return !ip.empty();
+    return !ip_address.empty();
   }
 
   static int create_socket_connection(const std::string &host, int port)
@@ -1294,7 +1290,7 @@ inline NetworkResult Network::test_force_download_failed_send()
 
 inline NetworkResult Network::test_force_download_http_error()
 {
-  return NetworkResult(false, 9, "HTTP error: 404");
+  return {false, 9, "HTTP error: 404"};
 }
 
 inline void Network::test_mark_download_branches()
