@@ -949,6 +949,9 @@ public:
       return -1;
     }
 
+    // Set timeout to prevent hanging during connect
+    set_socket_timeout(3, sockfd);
+
     status = connect(sockfd, result->ai_addr, result->ai_addrlen);
     freeaddrinfo(result);
 
