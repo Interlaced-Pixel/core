@@ -36,9 +36,8 @@ When modifying or creating header files in pixelLib, follow these strict guideli
 
 ### Code Style
 1. **clang-format** - Code will be automatically formatted; follow existing style
-2. **clang-tidy** - Run `make clang-tidy` to catch issues before committing
-3. **Documentation** - Add clear comments for public APIs and complex algorithms
-4. **Error handling** - Use Result/Optional types or exceptions with clear error messages
+2. **Documentation** - Add clear comments for public APIs and complex algorithms
+3. **Error handling** - Use Result/Optional types or exceptions with clear error messages
 
 ### Common Patterns
 ```cpp
@@ -73,12 +72,11 @@ public:
 - [ ] Platform-specific code is properly guarded with `#ifdef`
 - [ ] Public APIs have documentation comments
 - [ ] Code compiles with C++23 standard (`-std=c++23`)
-- [ ] `make clang-tidy` passes without errors
 - [ ] Changes maintain header-only architecture
 
 ### Avoid
 - Creating `.cpp` files (this is header-only)
-- Using deprecated C++ features (clang-tidy will flag these)
+- Using deprecated C++ features
 - Platform-specific code without preprocessor guards
 - Heavy templates that significantly increase compile time
 - Exposing internal implementation details in public APIs

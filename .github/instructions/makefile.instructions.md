@@ -18,8 +18,6 @@ The Makefile is the central build system for pixelLib. When modifying it, follow
 - `run-tests` - Execute the test binary
 - `coverage` - Generate coverage reports (HTML and LCOV)
 - `clean` - Remove build artifacts
-- `clang-tidy` - Run static analysis
-- `clang-tidy-fix` - Auto-fix issues
 - `compile-commands` - Generate compilation database for clangd
 
 ### Coverage System

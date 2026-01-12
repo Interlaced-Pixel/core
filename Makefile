@@ -73,7 +73,7 @@ DOCTEST_MAIN := $(TEST_DIR)/doctest_main.cpp
 SOURCES := $(filter-out $(DOCTEST_MAIN), $(ALL_SOURCES)) $(DOCTEST_MAIN)
 TEST_BIN := $(BIN_DIR)/pixellib_tests
 
-.PHONY: all test run-tests coverage clean doctest compile-commands clang-tidy clang-tidy-fix clang-tidy-report
+.PHONY: all test run-tests coverage clean doctest compile-commands
 
 all: clean test coverage doctest
 
@@ -85,7 +85,9 @@ $(BIN_DIR):
 
 third-party/doctest/doctest.h:
 	@mkdir -p third-party/doctest
-	@./tools/get_doctest.sh
+	@echo "Downloading doctest..."
+	@curl -fsSL https://raw.githubusercontent.com/doctest/doctest/v2.4.11/doctest/doctest.h -o $@ || \
+		(wget -q https://raw.githubusercontent.com/doctest/doctest/v2.4.11/doctest/doctest.h -O $@)
 
 # Explicit target to fetch doctest header
 doctest: third-party/doctest/doctest.h
@@ -145,25 +147,3 @@ compile-commands: | $(BIN_DIR)
 	@echo "]" >> $(BIN_DIR)/compile_commands.json
 	@cp $(BIN_DIR)/compile_commands.json build/compile_commands.json
 	@echo "Compilation database generated at build/compile_commands.json"
-
-# Clang-tidy targets
-clang-tidy: compile-commands
-	@echo "Running clang-tidy on all source files..."
-	@$(CXX) --version | grep -q clang && \
-		for src in $(SOURCES); do \
-			echo "Checking $$src..."; \
-			clang-tidy $$src --config-file=.clang-tidy; \
-		done || echo "clang-tidy requires clang++"
-
-clang-tidy-fix: compile-commands
-	@echo "Running clang-tidy with auto-fix..."
-	@$(CXX) --version | grep -q clang && \
-		for src in $(SOURCES); do \
-			echo "Fixing $$src..."; \
-			clang-tidy $$src --config-file=.clang-tidy --fix; \
-		done || echo "clang-tidy requires clang++"
-
-clang-tidy-report: compile-commands
-	@echo "Generating clang-tidy report..."
-	@$(CXX) --version | grep -q clang && \
-		clang-tidy $(SOURCES) --config-file=.clang-tidy --output-file=clang-tidy-report.txt || echo "clang-tidy requires clang++"

@@ -4,7 +4,6 @@ This is a header-only C++23 utility library providing essential modules for file
 
 ## Required Before Each Commit
 - Run `make run-tests` to ensure all tests pass
-- Run `make clang-tidy` to verify code quality and modern C++ compliance
 - Ensure test coverage remains above 95% by running `make coverage`
 - Format code with clang-format (integrated with VS Code or run manually)
 
@@ -13,8 +12,7 @@ This is a header-only C++23 utility library providing essential modules for file
 - **Debug builds**: `make CXXFLAGS="-O0 -g"` for debugging symbols
 - **Test**: `make run-tests` (executes all test suites, ~73 tests)
 - **Coverage**: `make coverage` → generates HTML report in `build/coverage/html/index.html`
-- **Code quality**: `make clang-tidy` (static analysis), `make clang-tidy-fix` (auto-fix)
-- **Full CI check**: `make clean && make test && make run-tests && make coverage && make clang-tidy`
+- **Full CI check**: `make clean && make test && make run-tests && make coverage`
 
 ## Repository Structure
 ```
@@ -32,9 +30,7 @@ pixelLib/
 │   ├── test_main.cc
 │   └── doctest_main.cpp
 ├── tools/            # Utility scripts
-│   ├── get_doctest.sh        # Fetches doctest header
-│   ├── run-clang-tidy.sh     # Runs clang-tidy checks
-│   └── setup-clang-tidy.sh   # Installs clang-tidy
+│   └── get_doctest.sh        # Fetches doctest header
 └── build/           # Build artifacts (gitignored)
     ├── tests/       # Compiled test binary
     └── coverage/    # Coverage reports (HTML & LCOV)
@@ -56,7 +52,6 @@ pixelLib/
 
 ### C++ Style & Best Practices
 - **Modern C++23**: Use std::filesystem, std::ranges, concepts, and other C++23 features
-- **clang-tidy enforced**: Runs modernize-*, performance-*, and safety checks automatically
 - **clang-format**: Automatic formatting configured in `.clang-format` file
 - **Namespace structure**: Always use `pixellib::core::<module>::<class>` pattern
 - **Header-only constraint**: All implementations must be in headers (no `.cpp` files)
@@ -81,11 +76,8 @@ pixelLib/
 - **Compilation database**: `make compile-commands` generates `build/compile_commands.json` for clangd
 
 ## Code Quality & Tooling
-- **clang-tidy**: Comprehensive configuration in `.clang-tidy` with modern C++ enforcement
-  - Checks: modernize-*, performance-*, readability-*, bugprone-*, cppcoreguidelines-*
-  - Run: `make clang-tidy` (check), `make clang-tidy-fix` (auto-fix), `make clang-tidy-report` (detailed report)
 - **clang-format**: Code formatting via `.clang-format` file (auto-applied in VS Code)
-- **VS Code integration**: Optimized settings in `.vscode/` for clangd and clang-tidy
+- **VS Code integration**: Optimized settings in `.vscode/` for clangd
 - **CI/CD**: GitHub Actions in `.github/workflows/build-test.yml` runs all checks on push/PR
 
 ## Development Workflow Examples
@@ -96,16 +88,14 @@ pixelLib/
 3. Add comprehensive tests in `tests/test_<module>.cc`
 4. Run `make run-tests` to verify tests pass
 5. Run `make coverage` to ensure >95% coverage
-6. Run `make clang-tidy` to verify code quality
-7. Commit changes with descriptive message
+6. Commit changes with descriptive message
 
 ### Fixing a Bug
 1. Add a failing test case that reproduces the bug in `tests/test_<module>.cc`
 2. Run `make run-tests` to confirm the test fails
 3. Fix the bug in `include/<module>.hpp`
 4. Run `make run-tests` to confirm the test passes
-5. Run `make clang-tidy` to check for issues
-6. Commit with reference to the bug
+5. Commit with reference to the bug
 
 ### Debugging Build Issues
 - Use debug builds: `make CXXFLAGS="-O0 -g"` for debug symbols
@@ -184,28 +174,28 @@ TEST_CASE("ModuleName::new_function - error handling") {
 
 ## Key Constraints & Requirements
 - **Header-only**: No compiled library artifacts, all code in headers
-- **C++23 compliance**: Use modern C++ features, enforced by clang-tidy
+- **C++23 compliance**: Use modern C++ features
 - **Minimal dependencies**: Only add dependencies if absolutely necessary
 - **Consistent style**: Follow existing naming conventions and clang-format rules
 - **Test coverage**: Add comprehensive tests for any new functionality
-- **Performance**: Consider performance implications; clang-tidy flags inefficiencies
+- **Performance**: Consider performance implications
 - **Cross-platform**: Ensure Windows/macOS/Linux compatibility with platform-specific code when needed
 
 ## Integration & Tooling
-- **VS Code**: Optimized configuration with clangd, clang-tidy, and clang-format
+- **VS Code**: Optimized configuration with clangd and clang-format
 - **clangd**: Language server for code navigation, auto-completion, and diagnostics
 - **Coverage visualization**: Use "Coverage Gutters" extension with `build/coverage/lcov.relative.info`
-- **CI/CD**: GitHub Actions automatically runs build, test, coverage, and clang-tidy on PR
+- **CI/CD**: GitHub Actions automatically runs build, test, and coverage on PR
 
 ## Guidelines for AI Agents
-- **Root cause analysis**: Use clang-tidy to identify fundamental issues, not just symptoms
-- **Modern C++ first**: Leverage C++23 features and follow clang-tidy recommendations
+- **Root cause analysis**: Use modern C++ best practices to identify fundamental issues
+- **Modern C++ first**: Leverage C++23 features
 - **Header-only constraint**: All implementations must be in headers, never create `.cpp` files
 - **Test-driven**: Always add/modify tests when implementing changes
-- **Performance aware**: Watch for clang-tidy performance warnings
+- **Performance aware**: Watch for performance implications
 - **Cross-platform**: Consider Windows/macOS/Linux differences in implementations
 - **Minimal changes**: Make surgical, targeted changes rather than broad refactoring
-- **Validate thoroughly**: Run tests, coverage, and clang-tidy before considering work complete
+- **Validate thoroughly**: Run tests and coverage before considering work complete
 - **Commit messages**: Keep commit messages short and concise - maximum 50 characters for the first line, no long explanations
 - **No mock code**: NEVER use mock code for any reason, always use real code
 - **Convert mock to real**: ALWAYS convert mock code to real code
