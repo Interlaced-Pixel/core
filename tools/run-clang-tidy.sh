@@ -135,21 +135,21 @@ if [[ "$VERBOSE" == "true" ]]; then
     CLANG_TIDY_CMD="$CLANG_TIDY_CMD --verbose"
 fi
 
-if [[ -n "$OUTPUT_FILE" ]]; then
-    CLANG_TIDY_CMD="$CLANG_TIDY_CMD --export-fixes=$OUTPUT_FILE"
-fi
+# Prepare header filter and compile commands
+HEADER_FILTER="--header-filter='^(include/|tests/)'"
+COMPILE_COMMANDS_OPTION="--export-fixes=clang-tidy-fixes.yaml"
 
-# Add header filter
-CLANG_TIDY_CMD="$CLANG_TIDY_CMD --header-filter='^(include/|tests/).*'"
+# Convert SOURCE_FILES to array (compatible with bash < 4.0)
+IFS=$'\n' read -r -d '' -a FILES <<< "$SOURCE_FILES"
+unset IFS
 
-# Run clang-tidy
 echo -e "${BLUE}Running clang-tidy...${NC}"
-echo "Command: $CLANG_TIDY_CMD"
+echo "Command: ${CLANG_TIDY} --checks='${CHECKS}' ${HEADER_FILTER} ${FIX_OPTION} ${COMPILE_COMMANDS_OPTION} ${FILES[@]}"
 
 if [[ -n "$OUTPUT_FILE" && "$OUTPUT_FORMAT" == "text" ]]; then
-    echo "$SOURCE_FILES" | xargs -P "$JOBS" -I {} bash -c "$CLANG_TIDY_CMD {}" 2>&1 | tee "$OUTPUT_FILE"
+    ${CLANG_TIDY} --checks="${CHECKS}" ${HEADER_FILTER} ${FIX_OPTION} ${COMPILE_COMMANDS_OPTION} "${FILES[@]}" 2>&1 | tee "$OUTPUT_FILE"
 else
-    echo "$SOURCE_FILES" | xargs -P "$JOBS" -I {} bash -c "$CLANG_TIDY_CMD {}"
+    ${CLANG_TIDY} --checks="${CHECKS}" ${HEADER_FILTER} ${FIX_OPTION} ${COMPILE_COMMANDS_OPTION} "${FILES[@]}" 2>&1
 fi
 
 # Check results

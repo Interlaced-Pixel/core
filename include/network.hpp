@@ -247,9 +247,8 @@ public:
     struct sockaddr_in6 addr6 = {};
     void *addr_ptr = nullptr;
     int addr_len = 0;
-    bool is_ipv6 = (ip_address.find(':') != std::string::npos);
 
-    if (is_ipv6)
+    if (ip_address.find(':') != std::string::npos)
     {
       sockfd = socket(AF_INET6, SOCK_STREAM, 0);
       if (sockfd < 0)
@@ -712,7 +711,7 @@ public:
 
     if (is_test_mode())
     {
-      // In test mode, return deterministic response
+      // In test mode, return a deterministic response
       std::string response = "HTTP/1.1 200 OK\r\n";
       response += "Content-Type: application/json\r\n";
       response += "Content-Length: " + std::to_string(payload.length() + 25) + "\r\n";
