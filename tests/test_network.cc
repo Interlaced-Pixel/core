@@ -202,11 +202,12 @@ TEST_SUITE("Network Module")
     CHECK(response2.find("{\"success\": true, \"data\": \"payload\"}") != std::string::npos);
 
     ::std::string response3 = pixellib::core::network::Network::https_get("https://example.com/test");
-    CHECK(response3.find("HTTPS response from https://example.com/test") != std::string::npos);
+    CHECK(response3.find("HTTPS/1.1 200 OK") != std::string::npos);
+    CHECK(response3.find("Mock HTTP response from https://example.com/test") != std::string::npos);
 
     ::std::string response4 = pixellib::core::network::Network::https_post("https://example.com/post", "payload");
-    CHECK(response4.find("HTTPS POST response from https://example.com/post") != std::string::npos);
-    CHECK(response4.find("payload") != std::string::npos);
+    CHECK(response4.find("HTTPS/1.1 200 OK") != std::string::npos);
+    CHECK(response4.find("{\"success\": true, \"data\": \"payload\"}") != std::string::npos);
 
     // Clean up
     unset_env_var("PIXELLIB_TEST_MODE");
@@ -215,10 +216,10 @@ TEST_SUITE("Network Module")
   TEST_CASE("Url")
   {
     ::std::string encoded = pixellib::core::network::Network::url_encode("hello world");
-    CHECK(encoded == "hello world"); // Placeholder implementation returns input unchanged
+    CHECK(encoded == "hello%20world"); // Space should be encoded to %20
 
     ::std::string decoded = pixellib::core::network::Network::url_decode("hello%20world");
-    CHECK(decoded == "hello%20world"); // Placeholder implementation returns input unchanged
+    CHECK(decoded == "hello world"); // Should decode back to original
   }
 
   TEST_CASE("Interfaces")
@@ -531,7 +532,7 @@ TEST_SUITE("Test Helper Methods")
     ::std::string empty_post = pixellib::core::network::Network::http_post("", "payload");
     CHECK(empty_post.empty());
 
-    // Test HTTPS empty URL handling (HTTPS functions are placeholders that don't return empty for empty URLs)
+    // Test HTTPS empty URL handling (in test mode, empty URLs return fallback stub responses)
     ::std::string empty_https_get = pixellib::core::network::Network::https_get("");
     CHECK(empty_https_get == "HTTPS response from ");
 
@@ -952,7 +953,8 @@ TEST_SUITE("Test Helper Methods")
 
     // Test HTTPS URLs
     std::string response4 = Network::https_get("https://example.com");
-    CHECK(response4.find("HTTPS response from https://example.com") != std::string::npos);
+    CHECK(response4.find("HTTPS/1.1 200 OK") != std::string::npos);
+    CHECK(response4.find("Mock HTTP response from https://example.com") != std::string::npos);
 
     // Test POST with different payloads
     std::string post1 = Network::http_post("http://example.com", "");
@@ -962,7 +964,8 @@ TEST_SUITE("Test Helper Methods")
     CHECK(post2.find("HTTP/1.1 200 OK") != std::string::npos);
 
     std::string post3 = Network::https_post("https://example.com", "json={\"key\":\"value\"}");
-    CHECK(post3.find("HTTPS POST response from https://example.com") != std::string::npos);
+    CHECK(post3.find("HTTPS/1.1 200 OK") != std::string::npos);
+    CHECK(post3.find("\"data\": \"json={\"key\":\"value\"}") != std::string::npos);
 
     // Clean up
     unset_env_var("PIXELLIB_TEST_MODE");
