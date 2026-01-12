@@ -77,7 +77,7 @@ TEST_BIN := $(BIN_DIR)/pixellib_tests
 
 all: clean test coverage doctest
 
-$(TEST_BIN): $(SOURCES) | $(BIN_DIR)
+$(TEST_BIN): $(SOURCES) third-party/doctest/doctest.h | $(BIN_DIR)
 	$(CXX) -std=$(STD) $(WARN) $(DBG) $(INCLUDES) $(COV_CFLAGS) $(SOURCES) -o $(TEST_BIN) $(LIBS)
 
 $(BIN_DIR):
