@@ -20,7 +20,7 @@ A comprehensive C++ core library providing essential utilities for filesystem op
 ### Logging
 - Configurable logging with multiple levels (TRACE, DEBUG, INFO, WARNING, ERROR, FATAL)
 - Customizable output formatting
-- File rotation (size-based and time-based). Size-based rotation now considers the next write and will rotate before a write that would exceed the limit.
+- File rotation (size-based and time-based). Size-based rotation now considers the next writing and will rotate before a writing that would exceed the limit.
 - Thread-safe logging operations
 - Structured logging support (key/value pairs)
 - Fluent configuration using `Logger::LoggerConfig` and `Logger::LoggerConfigBuilder`
@@ -211,9 +211,9 @@ Coverage reports are generated in the `build/coverage` directory.
 
 MIT License
 
-Copyright (c) 2025 Your Name or Organization
+Copyright © 2025 Interlaced Pixel
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
+Permission is hereby granted, free of charge, to any person getting a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
 to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
@@ -221,12 +221,12 @@ copies of the Software, and to permit persons to whom the Software is
 furnished to do so, subject to the following conditions:
 
 The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+copies or large portions of the Software.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+THE SOFTWARE IS PROVIDED "AS IS," WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM,
+OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.

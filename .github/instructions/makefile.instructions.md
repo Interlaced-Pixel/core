@@ -7,9 +7,9 @@ applyTo: "**/Makefile"
 The Makefile is the central build system for pixelLib. When modifying it, follow these guidelines:
 
 ### Build System Principles
-1. **Maintain simplicity** - Keep the Makefile straightforward and easy to understand
-2. **Cross-platform support** - Ensure changes work on macOS, Linux, and Windows (MinGW)
-3. **Compiler flexibility** - Support both clang++ and g++ with auto-detection
+1. **Maintain simplicity** – Keep the Makefile straightforward and easy to understand
+2. **Cross-platform support** – Ensure changes work on macOS, Linux, and Windows (MinGW)
+3. **Compiler flexibility** – Support both clang++ and g++ with auto-detection
 4. **Default to modern C++** - Keep `STD ?= c++23` as the standard
 
 ### Key Targets (Do Not Break)

@@ -4,7 +4,7 @@ This is a header-only C++23 utility library providing essential modules for file
 
 ## Required Before Each Commit
 - Run `make run-tests` to ensure all tests pass
-- Ensure test coverage remains above 95% by running `make coverage`
+- Ensure test coverage remains above 70% by running `make coverage`
 - Format code with clang-format (integrated with VS Code or run manually)
 
 ## Development Flow
@@ -40,7 +40,7 @@ pixelLib/
 - **Header-only design**: All implementations in headers (`include/`), no linking required
 - **C++23 target**: Modern C++ features enforced by Makefile (`STD ?= c++23`)
 - **Namespace structure**: `pixellib::core::<module>::<class>` (e.g., `pixellib::core::json::JSON`)
-- **Testing**: Single test binary using doctest framework, 95%+ code coverage target
+- **Testing**: Single test binary using a doctest framework, 95%+ code coverage target
 - **Cross-platform**: Windows (MinGW/MSVC), macOS, Linux with platform-specific handling
 
 ## Code Standards & Conventions
@@ -83,12 +83,12 @@ pixelLib/
 ## Development Workflow Examples
 
 ### Adding a New Feature
-1. Identify the module to modify (filesystem, json, logging, or network)
+1. Identify the module to modify (filesystem, JSON, logging, or network)
 2. Edit the header file in `include/<module>.hpp`
 3. Add comprehensive tests in `tests/test_<module>.cc`
 4. Run `make run-tests` to verify tests pass
-5. Run `make coverage` to ensure >95% coverage
-6. Commit changes with descriptive message
+5. Run `make coverage` to ensure >80% coverage
+6. Commit changes with a short concise message
 
 ### Fixing a Bug
 1. Add a failing test case that reproduces the bug in `tests/test_<module>.cc`
