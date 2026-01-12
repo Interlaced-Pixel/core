@@ -34,6 +34,7 @@
 #include <functional>
 #include <sstream>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include <arpa/inet.h>
@@ -66,7 +67,7 @@ struct NetworkResult
   bool success;
   int error_code;
   std::string message;
-  NetworkResult(bool s, int ec, const std::string &m) : success(s), error_code(ec), message(m) {}
+  NetworkResult(const bool s, const int ec, std::string m) : success(s), error_code(ec), message(std::move(m)) {}
 };
 
 class Network
