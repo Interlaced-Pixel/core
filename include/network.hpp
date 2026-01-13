@@ -91,7 +91,7 @@ private:
     return test_mode_value && test_mode_value[0] == '1';
   }
   // NOLINT(readability-suspicious-call-argument)
-  static void set_socket_timeout(int timeout_sec, int socket_fd)
+  static void set_socket_timeout(const int timeout_sec, const int socket_fd)
   {
 #ifdef _WIN32
     DWORD timeout = timeout_sec * 1000;
@@ -175,8 +175,9 @@ public:
     hints.ai_flags = 0;
     hints.ai_protocol = 0;
 
-    int status = getaddrinfo(hostname.c_str(), nullptr, &hints, &result);
-    if (status != 0)
+    if (const int status =
+            getaddrinfo(hostname.c_str(), nullptr, &hints, &result);
+        status != 0)
     {
       cleanup_winsock();
       return {false, 2, "Hostname resolution failed: " + std::string(gai_strerror(status))};
@@ -187,13 +188,13 @@ public:
 
     if (result->ai_family == AF_INET)
     {
-      struct sockaddr_in *ipv4 = reinterpret_cast<struct sockaddr_in *>(result->ai_addr);
+      const auto ipv4 = reinterpret_cast<struct sockaddr_in *>(result->ai_addr);
       inet_ntop(AF_INET, &ipv4->sin_addr, ip_str.data(), INET_ADDRSTRLEN);
       ip_address = std::string(ip_str.data());
     }
     else if (result->ai_family == AF_INET6)
     {
-      struct sockaddr_in6 *ipv6 = reinterpret_cast<struct sockaddr_in6 *>(result->ai_addr);
+      const auto ipv6 = reinterpret_cast<struct sockaddr_in6 *>(result->ai_addr);
       inet_ntop(AF_INET6, &ipv6->sin6_addr, ip_str.data(), INET6_ADDRSTRLEN);
       ip_address = std::string(ip_str.data());
     }
@@ -225,13 +226,12 @@ public:
     {
       return {false, resolve_result.error_code, resolve_result.message};
     }
-    std::string ip_address = resolve_result.message;
+    const std::string ip_address = resolve_result.message;
     if (!initialize_winsock())
     {
       if (test_is_host_hook)
       {
-        int forced = test_is_host_hook("init");
-        if (forced != 0)
+        if (int forced = test_is_host_hook("init"); forced != 0)
         {
           return {false, forced, "Forced winsock init failure"};
         }
@@ -239,7 +239,7 @@ public:
       return {false, 5, "Failed to initialize Winsock"};
     }
 
-    int sockfd = -1;
+    int sockfd;
     struct sockaddr_in addr4 = {};
     struct sockaddr_in6 addr6 = {};
     void *addr_ptr = nullptr;
@@ -252,8 +252,7 @@ public:
       {
         if (test_is_host_hook)
         {
-          int forced = test_is_host_hook("socket_ipv6");
-          if (forced != 0)
+          if (int forced = test_is_host_hook("socket_ipv6"); forced != 0)
           {
             cleanup_winsock();
             return {false, forced, "Forced IPv6 socket creation failure"};
@@ -285,8 +284,7 @@ public:
       {
         if (test_is_host_hook)
         {
-          int forced = test_is_host_hook("socket_ipv4");
-          if (forced != 0)
+          if (int forced = test_is_host_hook("socket_ipv4"); forced != 0)
           {
             cleanup_winsock();
             return {false, forced, "Forced IPv4 socket creation failure"};
@@ -314,7 +312,7 @@ public:
 
     set_socket_timeout(5, sockfd);
 
-    int status = connect(sockfd, reinterpret_cast<struct sockaddr *>(addr_ptr), addr_len);
+    const int status = connect(sockfd, static_cast<struct sockaddr *>(addr_ptr), addr_len);
 
     close_socket(sockfd);
     cleanup_winsock();
@@ -323,8 +321,7 @@ public:
     {
       if (test_is_host_hook)
       {
-        int forced = test_is_host_hook("connect");
-        if (forced != 0)
+        if (int forced = test_is_host_hook("connect"); forced != 0)
         {
           return {false, forced, "Forced connect failure"};
         }
@@ -349,8 +346,7 @@ public:
   {
     if (test_download_hook)
     {
-      int forced = test_download_hook("start");
-      if (forced != 0)
+      if (int forced = test_download_hook("start"); forced != 0)
       {
         return {false, forced, "Forced download failure"};
       }
@@ -376,18 +372,19 @@ public:
       {
         return {false, 7, "Failed to create output file"};
       }
-      const char *data = "TEST FILE";
+      auto data = "TEST FILE";
       fwrite(data, 1, std::strlen(data), file);
       fclose(file);
       return {true, 0, "File downloaded successfully (test mode)"};
     }
 
-    std::string protocol, host, path;
+    std::string host, path;
     int port = 80;
 
-    size_t protocol_end = url.find("://");
-    if (protocol_end != std::string::npos)
+    if (size_t protocol_end = url.find("://");
+        protocol_end != std::string::npos)
     {
+      std::string protocol;
       protocol = url.substr(0, protocol_end);
       if (protocol == "https")
       {
@@ -395,9 +392,9 @@ public:
       }
 
       size_t host_start = protocol_end + 3;
-      size_t host_end = url.find('/', host_start);
 
-      if (host_end == std::string::npos)
+      if (size_t host_end = url.find('/', host_start);
+          host_end == std::string::npos)
       {
         host = url.substr(host_start);
         path = "/";
@@ -408,8 +405,7 @@ public:
         path = url.substr(host_end);
       }
 
-      size_t port_pos = host.find(':');
-      if (port_pos != std::string::npos)
+      if (size_t port_pos = host.find(':'); port_pos != std::string::npos)
       {
         std::string port_str = host.substr(port_pos + 1);
         host = host.substr(0, port_pos);
@@ -435,8 +431,7 @@ public:
     {
       if (test_download_hook)
       {
-        int forced = test_download_hook("getaddrinfo");
-        if (forced != 0)
+        if (int forced = test_download_hook("getaddrinfo"); forced != 0)
         {
           cleanup_winsock();
           return {false, forced, "Forced getaddrinfo failure"};
@@ -451,8 +446,7 @@ public:
     {
       if (test_download_hook)
       {
-        int forced = test_download_hook("socket_create");
-        if (forced != 0)
+        if (int forced = test_download_hook("socket_create"); forced != 0)
         {
           freeaddrinfo(result);
           cleanup_winsock();
@@ -470,8 +464,7 @@ public:
     {
       if (test_download_hook)
       {
-        int forced = test_download_hook("connect");
-        if (forced != 0)
+        if (int forced = test_download_hook("connect"); forced != 0)
         {
           freeaddrinfo(result);
           close_socket(sockfd);
@@ -490,13 +483,13 @@ public:
     request += "Connection: close\r\n\r\n";
 
     // NOLINT(misc-include-cleaner)
-    ssize_t send_status = send(sockfd, request.c_str(), request.length(), 0);
-    if (send_status < 0)
+    if (ssize_t send_status =
+            send(sockfd, request.c_str(), request.length(), 0);
+        send_status < 0)
     {
       if (test_download_hook)
       {
-        int forced = test_download_hook("send");
-        if (forced != 0)
+        if (int forced = test_download_hook("send"); forced != 0)
         {
           freeaddrinfo(result);
           close_socket(sockfd);
@@ -515,8 +508,7 @@ public:
     {
       if (test_download_hook)
       {
-        int forced = test_download_hook("fopen");
-        if (forced != 0)
+        if (int forced = test_download_hook("fopen"); forced != 0)
         {
           freeaddrinfo(result);
           close_socket(sockfd);
@@ -538,27 +530,26 @@ public:
     ssize_t recv_status = 0;
     while ((recv_status = recv(sockfd, buffer.data(), buffer.size() - 1, 0)) > 0)
     {
-      buffer.data()[static_cast<size_t>(recv_status)] = '\0';
+      buffer[static_cast<size_t>(recv_status)] = '\0';
 
       if (!headers_parsed)
       {
         headers += buffer.data();
-        size_t header_end = headers.find("\r\n\r\n");
-        if (header_end != std::string::npos)
+        if (size_t header_end = headers.find("\r\n\r\n");
+            header_end != std::string::npos)
         {
           headers_parsed = true;
           std::string header_part = headers.substr(0, header_end);
           std::string body_part = headers.substr(header_end + 4);
 
-          size_t status_pos = header_part.find(' ');
-          if (status_pos != std::string::npos)
+          if (size_t status_pos = header_part.find(' ');
+              status_pos != std::string::npos)
           {
-            size_t status_end = header_part.find(' ', status_pos + 1);
-            if (status_end != std::string::npos)
+            if (size_t status_end = header_part.find(' ', status_pos + 1);
+                status_end != std::string::npos)
             {
               std::string status_code = header_part.substr(status_pos + 1, status_end - status_pos - 1);
-              int code = std::stoi(status_code);
-              if (code >= 400)
+              if (int code = std::stoi(status_code); code >= 400)
               {
                 fclose(file);
                 freeaddrinfo(result);
@@ -586,8 +577,7 @@ public:
     {
       if (test_download_hook)
       {
-        int forced = test_download_hook("recv_error");
-        if (forced != 0)
+        if (int forced = test_download_hook("recv_error"); forced != 0)
         {
           return {false, forced, "Forced recv failure"};
         }
@@ -607,7 +597,7 @@ public:
 
     if (is_test_mode())
     {
-      // In test mode, return deterministic response
+      // In test mode, return a deterministic response
       std::string response = "HTTP/1.1 200 OK\r\n";
       response += "Content-Type: text/plain\r\n";
       response += "Content-Length: 42\r\n";
@@ -617,13 +607,14 @@ public:
     }
 
     // Real implementation using socket connection
-    std::string protocol, host, path;
+    std::string host, path;
     int port = 80;
 
     // Parse URL
-    size_t protocol_end = url.find("://");
-    if (protocol_end != std::string::npos)
+    if (size_t protocol_end = url.find("://");
+        protocol_end != std::string::npos)
     {
+      std::string protocol;
       protocol = url.substr(0, protocol_end);
       if (protocol == "https")
       {
@@ -631,9 +622,9 @@ public:
       }
 
       size_t host_start = protocol_end + 3;
-      size_t host_end = url.find('/', host_start);
 
-      if (host_end == std::string::npos)
+      if (size_t host_end = url.find('/', host_start);
+          host_end == std::string::npos)
       {
         host = url.substr(host_start);
         path = "/";
@@ -644,8 +635,7 @@ public:
         path = url.substr(host_end);
       }
 
-      size_t port_pos = host.find(':');
-      if (port_pos != std::string::npos)
+      if (size_t port_pos = host.find(':'); port_pos != std::string::npos)
       {
         std::string port_str = host.substr(port_pos + 1);
         host = host.substr(0, port_pos);
@@ -671,8 +661,8 @@ public:
     request += "\r\n";
 
     // Send request
-    ssize_t sent = send(sockfd, request.c_str(), request.length(), 0);
-    if (sent < 0)
+    if (ssize_t sent = send(sockfd, request.c_str(), request.length(), 0);
+        sent < 0)
     {
       close_socket_connection(sockfd);
       return "Failed to send request";
@@ -685,8 +675,8 @@ public:
 
     while ((received = recv(sockfd, buffer.data(), buffer.size() - 1, 0)) > 0)
     {
-      buffer.data()[static_cast<size_t>(received)] = '\0';
-      response += buffer.data();
+      buffer[static_cast<size_t>(received)] = '\0';
+      response.append(buffer.data(), static_cast<size_t>(received));
     }
 
     close_socket_connection(sockfd);
@@ -713,18 +703,19 @@ public:
       response += "Content-Type: application/json\r\n";
       response += "Content-Length: " + std::to_string(payload.length() + 25) + "\r\n";
       response += "\r\n";
-      response += "{\"success\": true, \"data\": \"" + payload + "\"}";
+      response += R"({"success": true, "data": ")" + payload + "\"}";
       return response;
     }
 
     // Real implementation using socket connection
-    std::string protocol, host, path;
+    std::string host, path;
     int port = 80;
 
     // Parse URL (same as http_get)
-    size_t protocol_end = url.find("://");
-    if (protocol_end != std::string::npos)
+    if (size_t protocol_end = url.find("://");
+        protocol_end != std::string::npos)
     {
+      std::string protocol;
       protocol = url.substr(0, protocol_end);
       if (protocol == "https")
       {
@@ -732,9 +723,9 @@ public:
       }
 
       size_t host_start = protocol_end + 3;
-      size_t host_end = url.find('/', host_start);
 
-      if (host_end == std::string::npos)
+      if (size_t host_end = url.find('/', host_start);
+          host_end == std::string::npos)
       {
         host = url.substr(host_start);
         path = "/";
@@ -745,8 +736,7 @@ public:
         path = url.substr(host_end);
       }
 
-      size_t port_pos = host.find(':');
-      if (port_pos != std::string::npos)
+      if (size_t port_pos = host.find(':'); port_pos != std::string::npos)
       {
         std::string port_str = host.substr(port_pos + 1);
         host = host.substr(0, port_pos);
@@ -758,7 +748,7 @@ public:
       return "Invalid URL format";
     }
 
-    // Create socket and send HTTP POST request
+    // Create a socket and send HTTP POST request
     int sockfd = create_socket_connection(host, port);
     if (sockfd < 0)
     {
@@ -775,8 +765,8 @@ public:
     request += payload;
 
     // Send request
-    ssize_t sent = send(sockfd, request.c_str(), request.length(), 0);
-    if (sent < 0)
+    if (ssize_t sent = send(sockfd, request.c_str(), request.length(), 0);
+        sent < 0)
     {
       close_socket_connection(sockfd);
       return "Failed to send request";
@@ -789,8 +779,8 @@ public:
 
     while ((received = recv(sockfd, buffer.data(), buffer.size() - 1, 0)) > 0)
     {
-      buffer.data()[static_cast<size_t>(received)] = '\0';
-      response += buffer.data();
+      buffer[static_cast<size_t>(received)] = '\0';
+      response.append(buffer.data(), static_cast<size_t>(received));
     }
 
     close_socket_connection(sockfd);
@@ -833,9 +823,9 @@ public:
     return interfaces;
 #else
     std::vector<std::string> interfaces;
-    interfaces.push_back("eth0");
-    interfaces.push_back("wlan0");
-    interfaces.push_back("lo");
+    interfaces.emplace_back("eth0");
+    interfaces.emplace_back("wlan0");
+    interfaces.emplace_back("lo");
     return interfaces;
 #endif
   }
@@ -859,25 +849,24 @@ public:
     {
       return false;
     }
-    for (const std::string &part : parts)
+    for (const std::string &ipSegment : parts)
     {
-      if (part.empty())
+      if (ipSegment.empty())
       {
         return false;
       }
-      if (part.length() > 1 && part[0] == '0')
+      if (ipSegment.length() > 1 && ipSegment[0] == '0')
       {
         return false;
       }
-      for (char c : part)
+      for (const char c : ipSegment)
       {
         if (!std::isdigit(c))
         {
           return false;
         }
       }
-      int num = std::stoi(part);
-      if (num < 0 || num > 255)
+      if (const int num = std::stoi(ipSegment); num < 0 || num > 255)
       {
         return false;
       }
@@ -896,9 +885,9 @@ public:
     {
       return false;
     }
-    bool has_double_colon = (ip_address.find("::") != std::string::npos);
+    const bool has_double_colon = (ip_address.find("::") != std::string::npos);
     int colon_count = 0;
-    for (char c : ip_address)
+    for (const char c : ip_address)
     {
       if (c == ':')
       {
@@ -915,7 +904,7 @@ public:
     return !ip_address.empty();
   }
 
-  static int create_socket_connection(const std::string &host, int port)
+  static int create_socket_connection(const std::string &host, const int port)
   {
     if (host.empty() || port <= 0 || port > 65535)
     {
@@ -929,7 +918,7 @@ public:
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
 
-    std::string port_str = std::to_string(port);
+    const std::string port_str = std::to_string(port);
     int status = getaddrinfo(host.c_str(), port_str.c_str(), &hints, &result);
     if (status != 0)
     {
@@ -937,7 +926,7 @@ public:
       return -1;
     }
 
-    int sockfd = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
+    const int sockfd = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
     if (sockfd < 0)
     {
       freeaddrinfo(result);
@@ -945,7 +934,7 @@ public:
       return -1;
     }
 
-    // Set timeout to prevent hanging during connect
+    // Set timeout to prevent hanging during connection
     set_socket_timeout(3, sockfd);
 
     status = connect(sockfd, result->ai_addr, result->ai_addrlen);
@@ -961,7 +950,7 @@ public:
     return sockfd;
   }
 
-  static bool close_socket_connection(int socket_fd)
+  static bool close_socket_connection(const int socket_fd)
   {
     if (socket_fd < 0)
     {
@@ -983,17 +972,17 @@ public:
     {
       return -1;
     }
-    size_t pos = response.find(' ');
+    const size_t pos = response.find(' ');
     if (pos == std::string::npos)
     {
       return -1;
     }
-    size_t end_pos = response.find(' ', pos + 1);
+    const size_t end_pos = response.find(' ', pos + 1);
     if (end_pos == std::string::npos)
     {
       return -1;
     }
-    std::string code_str = response.substr(pos + 1, end_pos - pos - 1);
+    const std::string code_str = response.substr(pos + 1, end_pos - pos - 1);
     try
     {
       return std::stoi(code_str);
@@ -1004,12 +993,12 @@ public:
     }
   }
 
-  static bool is_http_success(int response_code)
+  static bool is_http_success(const int response_code)
   {
     return response_code >= 200 && response_code < 300;
   }
 
-  static double measure_latency(const std::string &host, int count = 4)
+  static double measure_latency(const std::string &host, const int count = 4)
   {
     if (host.empty() || count <= 0)
     {
@@ -1031,13 +1020,12 @@ public:
       auto start_time = std::chrono::high_resolution_clock::now();
 
       // Use socket connection to measure actual latency
-      int sockfd = create_socket_connection(host, 80);
-      if (sockfd >= 0)
+      if (const int sockfd = create_socket_connection(host, 80); sockfd >= 0)
       {
         close_socket_connection(sockfd);
         auto end_time = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
-        double latency_ms = static_cast<double>(duration.count()) / 1000.0;
+        const double latency_ms = static_cast<double>(duration.count()) / 1000.0;
         total_latency += latency_ms;
         successful_pings++;
       }
@@ -1060,7 +1048,7 @@ public:
 
     if (is_test_mode())
     {
-      // In test mode, do real download test but limit to 3 seconds
+      // In test mode, do a real download test but limit to 3 seconds
       std::string temp_file = "build/tmp/bandwidth_test_" + std::to_string(std::time(nullptr));
 
       auto start_time = std::chrono::high_resolution_clock::now();
@@ -1068,8 +1056,7 @@ public:
       // Try to download from known test endpoints
       bool download_success = false;
 
-      auto result = download_file(host, temp_file);
-      if (result.success)
+      if (auto result = download_file(host, temp_file); result.success)
       {
         download_success = true;
       }
@@ -1077,10 +1064,10 @@ public:
       if (!download_success)
       {
         // Fallback: create a local test file and measure local transfer speed
-        std::ofstream test_file(temp_file, std::ios::binary);
-        if (test_file.is_open())
+        if (std::ofstream test_file(temp_file, std::ios::binary);
+            test_file.is_open())
         {
-          const size_t test_size = static_cast<size_t>(1024 * 1024); // 1MB
+          constexpr auto test_size = static_cast<size_t>(1024 * 1024); // 1MB
           std::vector<char> buffer(test_size, 0);
           test_file.write(buffer.data(), test_size);
           test_file.close();
@@ -1132,8 +1119,7 @@ public:
 
     for (const auto &url : test_endpoints)
     {
-      auto result = download_file(url, temp_file);
-      if (result.success)
+      if (auto result = download_file(url, temp_file); result.success)
       {
         download_success = true;
         break;
@@ -1143,10 +1129,10 @@ public:
     if (!download_success)
     {
       // Fallback: create a local test file and measure local transfer speed
-      std::ofstream test_file(temp_file, std::ios::binary);
-      if (test_file.is_open())
+      if (std::ofstream test_file(temp_file, std::ios::binary);
+          test_file.is_open())
       {
-        const size_t test_size = static_cast<size_t>(1024 * 1024); // 1MB
+        constexpr auto test_size = static_cast<size_t>(1024 * 1024); // 1MB
         std::vector<char> buffer(test_size, 0);
         test_file.write(buffer.data(), test_size);
         test_file.close();
@@ -1262,8 +1248,7 @@ inline int Network::test_force_is_host_reachable_inet_pton_ipv4(const std::strin
 
 inline int Network::test_force_download_fopen(const std::string &dest)
 {
-  FILE *f = fopen(dest.c_str(), "wb");
-  if (f)
+  if (FILE *f = fopen(dest.c_str(), "wb"))
   {
     fclose(f);
     std::remove(dest.c_str());
@@ -1303,7 +1288,7 @@ inline void Network::test_mark_download_branches()
 
 inline void Network::test_mark_is_host_reachable_branches()
 {
-  // Call is_host_reachable with hook
+  // Call is_host_reachable with a hook
   test_is_host_hook = [](const std::string &) { return 0; };
   is_host_reachable("example.com");
   test_is_host_hook = nullptr;
