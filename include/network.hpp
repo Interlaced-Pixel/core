@@ -188,13 +188,13 @@ public:
 
     if (result->ai_family == AF_INET)
     {
-      struct sockaddr_in *ipv4 = reinterpret_cast<struct sockaddr_in *>(result->ai_addr);
+      const auto ipv4 = reinterpret_cast<struct sockaddr_in *>(result->ai_addr);
       inet_ntop(AF_INET, &ipv4->sin_addr, ip_str.data(), INET_ADDRSTRLEN);
       ip_address = std::string(ip_str.data());
     }
     else if (result->ai_family == AF_INET6)
     {
-      struct sockaddr_in6 *ipv6 = reinterpret_cast<struct sockaddr_in6 *>(result->ai_addr);
+      const auto ipv6 = reinterpret_cast<struct sockaddr_in6 *>(result->ai_addr);
       inet_ntop(AF_INET6, &ipv6->sin6_addr, ip_str.data(), INET6_ADDRSTRLEN);
       ip_address = std::string(ip_str.data());
     }
@@ -1067,7 +1067,7 @@ public:
         if (std::ofstream test_file(temp_file, std::ios::binary);
             test_file.is_open())
         {
-          constexpr size_t test_size = static_cast<size_t>(1024 * 1024); // 1MB
+          constexpr auto test_size = static_cast<size_t>(1024 * 1024); // 1MB
           std::vector<char> buffer(test_size, 0);
           test_file.write(buffer.data(), test_size);
           test_file.close();
@@ -1132,7 +1132,7 @@ public:
       if (std::ofstream test_file(temp_file, std::ios::binary);
           test_file.is_open())
       {
-        constexpr size_t test_size = static_cast<size_t>(1024 * 1024); // 1MB
+        constexpr auto test_size = static_cast<size_t>(1024 * 1024); // 1MB
         std::vector<char> buffer(test_size, 0);
         test_file.write(buffer.data(), test_size);
         test_file.close();
@@ -1288,7 +1288,7 @@ inline void Network::test_mark_download_branches()
 
 inline void Network::test_mark_is_host_reachable_branches()
 {
-  // Call is_host_reachable with hook
+  // Call is_host_reachable with a hook
   test_is_host_hook = [](const std::string &) { return 0; };
   is_host_reachable("example.com");
   test_is_host_hook = nullptr;
