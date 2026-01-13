@@ -50,13 +50,13 @@ run_test: build_test
 
 coverage: run_test
 	mkdir -p build/coverage
-	ifeq ($(IS_CLANG),1)
-		$(LLVM_PROFDATA) merge -sparse default.profraw -o default.profdata
-		$(LLVM_COV) show ./build/unit_tests -instr-profile=default.profdata > build/coverage/coverage.txt
-		$(LLVM_COV) report ./build/unit_tests -instr-profile=default.profdata
-	else ifeq ($(IS_GCC),1)
-		gcovr -r . --html --html-details -o build/coverage/index.html .
-	endif
+ifeq ($(IS_CLANG),1)
+	$(LLVM_PROFDATA) merge -sparse default.profraw -o default.profdata
+	$(LLVM_COV) show ./build/unit_tests -instr-profile=default.profdata > build/coverage/coverage.txt
+	$(LLVM_COV) report ./build/unit_tests -instr-profile=default.profdata
+else ifeq ($(IS_GCC),1)
+	gcovr -r . --html --html-details -o build/coverage/index.html .
+endif
 
 clean:
 	rm -rf build/
