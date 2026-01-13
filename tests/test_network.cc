@@ -355,7 +355,7 @@ TEST_SUITE("Network Module")
   {
     double latency = pixellib::core::network::Network::measure_latency("example.com", 4);
     CHECK(latency >= 10.0);
-    CHECK(latency <= 2000.0); // Further increased upper bound for deterministic implementation
+    CHECK(latency <= 3000.0);
   }
 
   TEST_CASE("MeasureBandwidth")

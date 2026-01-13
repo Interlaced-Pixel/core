@@ -54,7 +54,7 @@ ifeq ($(IS_CLANG),1)
 	$(LLVM_PROFDATA) merge -sparse default.profraw -o default.profdata
 	$(LLVM_COV) show ./build/unit_tests -instr-profile=default.profdata > build/coverage/coverage.txt
 	$(LLVM_COV) report ./build/unit_tests -instr-profile=default.profdata
-	@(which llvm-cov-to-lcov >/dev/null 2>&1 && llvm-cov-to-lcov default.profdata -o build/coverage/coverage.lcov 2>/dev/null && echo "LCOV format report generated at build/coverage/coverage.lcov") || echo "LLVM coverage report generated at build/coverage/coverage.txt"
+	gcovr -r . --exclude 'third-party/*' --exclude 'tests/*' --lcov -o build/coverage/coverage.lcov && echo "LCOV report generated at build/coverage/coverage.lcov" || echo "Failed to generate LCOV report"
 else ifeq ($(IS_GCC),1)
 	gcovr -r . --html --html-details -o build/coverage/index.html .
 	lcov --capture --directory . --output-file build/coverage/coverage.lcov --exclude "*/third-party/*" --exclude "*/tests/*" 2>/dev/null && echo "LCOV report generated at build/coverage/coverage.lcov" || echo "Note: lcov not installed, install with: brew install lcov (macOS) or apt-get install lcov (Linux)"
@@ -71,13 +71,12 @@ clean:
 compile-commands:
 	mkdir -p build
 	@echo '[' > build/compile_commands.json
-	@echo '  {"directory":"'$(shell pwd)'","command":"clang++ -std=c++20 $(WARN) $(DBG) $(INCLUDES) -c tests/doctest_main.cpp","file":"tests/doctest_main.cpp"},' >> build/compile_commands.json
-	@echo '  {"directory":"'$(shell pwd)'","command":"clang++ -std=c++20 $(WARN) $(DBG) $(INCLUDES) -c tests/test_filesystem.cc","file":"tests/test_filesystem.cc"},' >> build/compile_commands.json
-	@echo '  {"directory":"'$(shell pwd)'","command":"clang++ -std=c++20 $(WARN) $(DBG) $(INCLUDES) -c tests/test_json.cc","file":"tests/test_json.cc"},' >> build/compile_commands.json
-	@echo '  {"directory":"'$(shell pwd)'","command":"clang++ -std=c++20 $(WARN) $(DBG) $(INCLUDES) -c tests/test_logging.cc","file":"tests/test_logging.cc"},' >> build/compile_commands.json
-	@echo '  {"directory":"'$(shell pwd)'","command":"clang++ -std=c++20 $(WARN) $(DBG) $(INCLUDES) -c tests/test_network.cc","file":"tests/test_network.cc"}' >> build/compile_commands.json
+	@echo '  {"directory":"'$(shell pwd)'","command":"$(CXX) -std=$(STD) $(WARN) $(DBG) $(INCLUDES) -c tests/doctest_main.cpp","file":"tests/doctest_main.cpp"},' >> build/compile_commands.json
+	@echo '  {"directory":"'$(shell pwd)'","command":"$(CXX) -std=$(STD) $(WARN) $(DBG) $(INCLUDES) -c tests/test_filesystem.cc","file":"tests/test_filesystem.cc"},' >> build/compile_commands.json
+	@echo '  {"directory":"'$(shell pwd)'","command":"$(CXX) -std=$(STD) $(WARN) $(DBG) $(INCLUDES) -c tests/test_json.cc","file":"tests/test_json.cc"},' >> build/compile_commands.json
+	@echo '  {"directory":"'$(shell pwd)'","command":"$(CXX) -std=$(STD) $(WARN) $(DBG) $(INCLUDES) -c tests/test_logging.cc","file":"tests/test_logging.cc"},' >> build/compile_commands.json
+	@echo '  {"directory":"'$(shell pwd)'","command":"$(CXX) -std=$(STD) $(WARN) $(DBG) $(INCLUDES) -c tests/test_network.cc","file":"tests/test_network.cc"}' >> build/compile_commands.json
 	@echo ']' >> build/compile_commands.json
-	echo '[{"directory":"'$(shell pwd)'","command":"$(CXX) -std=$(STD) $(WARN) $(DBG) $(COV_CFLAGS) $(INCLUDES) -o build/unit_tests tests/doctest_main.cpp tests/test_filesystem.cc tests/test_json.cc tests/test_logging.cc tests/test_network.cc $(LIBS)","file":"tests/doctest_main.cpp"}]' > build/compile_commands.json
 
 clang-tidy: compile-commands
 	$(CLANG_TIDY) -p build $(shell find . -name "*.cpp" -o -name "*.cc" -o -name "*.hpp" -o -name "*.h" | grep -v "./build/" | grep -v "./third-party/")

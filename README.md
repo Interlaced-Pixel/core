@@ -75,7 +75,11 @@ make run-tests
 make coverage
 ```
 
-Coverage reports are generated in the `build/coverage` directory.
+Coverage reports are generated in the `build/coverage` directory. The LCOV report is generated using `gcovr`. Ensure `gcovr` is installed on your system. You can install it via Homebrew:
+
+```bash
+brew install gcovr
+```
 
 Test mode for per-test isolation: set the environment variable `PIXELLIB_TEST_MODE=1` to make network operations deterministic and offline-safe (e.g., DNS resolves to 127.0.0.1, reachability returns success, and downloads write a small placeholder file).
 
@@ -197,7 +201,11 @@ make run-tests
 make coverage
 ```
 
-Coverage reports are generated in the `build/coverage` directory.
+Coverage reports are generated in the `build/coverage` directory. The LCOV report is generated using `gcovr`. Ensure `gcovr` is installed on your system. You can install it via Homebrew:
+
+```bash
+brew install gcovr
+```
 
 ## Contributing
 

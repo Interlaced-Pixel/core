@@ -151,6 +151,7 @@ TEST_SUITE("FileSystem Module")
 
     CHECK(FileSystem::last_write_time(dir + "/nonexistent.txt") == -1);
 
+    CHECK(FileSystem::remove(file));
     remove_dir_tree(dir);
   }
 
