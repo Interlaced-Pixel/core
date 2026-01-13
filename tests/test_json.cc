@@ -146,4 +146,146 @@ TEST_SUITE("JSON Module")
     CHECK_FALSE(pixellib::core::json::JSON::parse("\"\\uD83D\"", v, &err));
     CHECK(err.message.find("Missing low surrogate") != std::string::npos);
   }
+
+  TEST_CASE("ConstructorNumber")
+  {
+    // Test JSON(Number) constructor
+    pixellib::core::json::JSON::Number num{"42"};
+    pixellib::core::json::JSON v(num);
+    CHECK(v.is_number());
+    CHECK(v.as_number().to_int64() == 42);
+  }
+
+  TEST_CASE("ConstructorDouble")
+  {
+    // Test JSON(double) constructor
+    pixellib::core::json::JSON v(3.14);
+    CHECK(v.is_number());
+    CHECK(v.as_number().to_double() == 3.14);
+  }
+
+  TEST_CASE("TypeMethod")
+  {
+    pixellib::core::json::JSON v;
+    CHECK(v.type() == pixellib::core::json::JSON::Type::Null);
+
+    v = pixellib::core::json::JSON(true);
+    CHECK(v.type() == pixellib::core::json::JSON::Type::Bool);
+
+    v = pixellib::core::json::JSON::number("1");
+    CHECK(v.type() == pixellib::core::json::JSON::Type::Number);
+
+    v = pixellib::core::json::JSON(std::string("test"));
+    CHECK(v.type() == pixellib::core::json::JSON::Type::String);
+
+    v = pixellib::core::json::JSON::array(pixellib::core::json::JSON::array_t{});
+    CHECK(v.type() == pixellib::core::json::JSON::Type::Array);
+
+    v = pixellib::core::json::JSON::object(pixellib::core::json::JSON::object_t{});
+    CHECK(v.type() == pixellib::core::json::JSON::Type::Object);
+  }
+
+  TEST_CASE("AsBoolFallback")
+  {
+    pixellib::core::json::JSON v = pixellib::core::json::JSON(std::string("not bool"));
+    CHECK(v.as_bool(true) == true);
+    CHECK(v.as_bool(false) == false);
+  }
+
+  TEST_CASE("AsNumberException")
+  {
+    pixellib::core::json::JSON v = pixellib::core::json::JSON(std::string("not number"));
+    CHECK_THROWS_AS(v.as_number(), std::logic_error);
+  }
+
+  TEST_CASE("AsStringException")
+  {
+    pixellib::core::json::JSON v = pixellib::core::json::JSON(true);
+    CHECK_THROWS_AS(v.as_string(), std::logic_error);
+  }
+
+  TEST_CASE("AsArrayException")
+  {
+    pixellib::core::json::JSON v = pixellib::core::json::JSON(true);
+    CHECK_THROWS_AS(v.as_array(), std::logic_error);
+  }
+
+  TEST_CASE("AsArrayMutableException")
+  {
+    pixellib::core::json::JSON v = pixellib::core::json::JSON(false);
+    CHECK_THROWS_AS((const_cast<pixellib::core::json::JSON&>(v).as_array()), std::logic_error);
+  }
+
+  TEST_CASE("AsObjectException")
+  {
+    pixellib::core::json::JSON v = pixellib::core::json::JSON(true);
+    CHECK_THROWS_AS(v.as_object(), std::logic_error);
+  }
+
+  TEST_CASE("AsObjectMutableException")
+  {
+    pixellib::core::json::JSON v = pixellib::core::json::JSON(false);
+    CHECK_THROWS_AS((const_cast<pixellib::core::json::JSON&>(v).as_object()), std::logic_error);
+  }
+
+  TEST_CASE("PushBack")
+  {
+    pixellib::core::json::JSON arr = pixellib::core::json::JSON::array(pixellib::core::json::JSON::array_t{});
+    pixellib::core::json::JSON& ref = arr.push_back(pixellib::core::json::JSON::number("42"));
+    CHECK(arr.as_array().size() == 1);
+    CHECK(ref.as_number().to_int64() == 42);
+  }
+
+  TEST_CASE("OperatorBrackets")
+  {
+    pixellib::core::json::JSON obj = pixellib::core::json::JSON::object(pixellib::core::json::JSON::object_t{});
+    pixellib::core::json::JSON& ref = obj["key"];
+    ref = pixellib::core::json::JSON::number("123");
+    CHECK(obj["key"].as_number().to_int64() == 123);
+
+    // Test existing key lookup
+    pixellib::core::json::JSON& ref2 = obj["key"];
+    CHECK(ref2.as_number().to_int64() == 123);
+  }
+
+  TEST_CASE("FindKeyNotFound")
+  {
+    pixellib::core::json::JSON obj = pixellib::core::json::JSON::object(pixellib::core::json::JSON::object_t{});
+    const pixellib::core::json::JSON* p = obj.find("nonexistent");
+    CHECK(p == nullptr);
+  }
+
+  TEST_CASE("FindNotObject")
+  {
+    pixellib::core::json::JSON v = pixellib::core::json::JSON(std::string("not an object"));
+    const pixellib::core::json::JSON* p = v.find("key");
+    CHECK(p == nullptr);
+  }
+
+  TEST_CASE("IntegralNumberOverflow")
+  {
+    // Test int64_t overflow case
+    pixellib::core::json::JSON n = pixellib::core::json::JSON::number("-9999999999999999999999999999");
+    CHECK(n.as_number().to_int64(456) == std::numeric_limits<int64_t>::min());
+  }
+
+  TEST_CASE("IntegralNotValid")
+  {
+    pixellib::core::json::JSON n = pixellib::core::json::JSON::number("1.5");
+    CHECK_FALSE(n.as_number().is_integral());
+  }
+
+  TEST_CASE("DoubleConversionFallback")
+  {
+    pixellib::core::json::JSON n = pixellib::core::json::JSON::number("not a number");
+    CHECK(n.as_number().to_double(2.71) == 2.71);
+  }
+
+  TEST_CASE("TrailingCharactersError")
+  {
+    pixellib::core::json::JSON v;
+    pixellib::core::json::JsonError err;
+    CHECK_FALSE(pixellib::core::json::JSON::parse("null garbage", v, &err));
+    CHECK(err.message.find("Trailing") != std::string::npos);
+  }
 }

@@ -54,12 +54,19 @@ ifeq ($(IS_CLANG),1)
 	$(LLVM_PROFDATA) merge -sparse default.profraw -o default.profdata
 	$(LLVM_COV) show ./build/unit_tests -instr-profile=default.profdata > build/coverage/coverage.txt
 	$(LLVM_COV) report ./build/unit_tests -instr-profile=default.profdata
+	@(which llvm-cov-to-lcov >/dev/null 2>&1 && llvm-cov-to-lcov default.profdata -o build/coverage/coverage.lcov 2>/dev/null && echo "LCOV format report generated at build/coverage/coverage.lcov") || echo "LLVM coverage report generated at build/coverage/coverage.txt"
 else ifeq ($(IS_GCC),1)
 	gcovr -r . --html --html-details -o build/coverage/index.html .
+	lcov --capture --directory . --output-file build/coverage/coverage.lcov --exclude "*/third-party/*" --exclude "*/tests/*" 2>/dev/null && echo "LCOV report generated at build/coverage/coverage.lcov" || echo "Note: lcov not installed, install with: brew install lcov (macOS) or apt-get install lcov (Linux)"
 endif
 
 clean:
 	rm -rf build/
+	rm -f *.profraw *.profdata
+	rm -f coverage.lcov
+	find . -name "*.gcov" -delete 2>/dev/null || true
+	find . -name "*.gcda" -delete 2>/dev/null || true
+	find . -name "*.gcno" -delete 2>/dev/null || true
 
 compile-commands:
 	mkdir -p build
