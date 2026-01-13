@@ -63,9 +63,9 @@ clean:
 compile-commands:
 	mkdir -p build
 	@echo '[' > build/compile_commands.json
-	@echo '  {"directory":"'$(shell pwd)'","command":"$(CXX) -std=$(STD) $(WARN) $(DBG) $(INCLUDES) -c tests/doctest_main.cpp","file":"tests/doctest_main.cpp"},' >> build/compile_commands.json
-	@echo '  {"directory":"'$(shell pwd)'","command":"$(CXX) -std=$(STD) $(WARN) $(DBG) $(INCLUDES) -c tests/test_filesystem.cc","file":"tests/test_filesystem.cc"},' >> build/compile_commands.json
-	@echo '  {"directory":"'$(shell pwd)'","command":"$(CXX) -std=$(STD) $(WARN) $(DBG) $(INCLUDES) -c tests/test_json.cc","file":"tests/test_json.cc"},' >> build/compile_commands.json
-	@echo '  {"directory":"'$(shell pwd)'","command":"$(CXX) -std=$(STD) $(WARN) $(DBG) $(INCLUDES) -c tests/test_logging.cc","file":"tests/test_logging.cc"},' >> build/compile_commands.json
-	@echo '  {"directory":"'$(shell pwd)'","command":"$(CXX) -std=$(STD) $(WARN) $(DBG) $(INCLUDES) -c tests/test_network.cc","file":"tests/test_network.cc"}' >> build/compile_commands.json
+	@echo '  {"directory":"'$(shell pwd)'","command":"clang++ -std=c++20 $(WARN) $(DBG) $(INCLUDES) -c tests/doctest_main.cpp","file":"tests/doctest_main.cpp"},' >> build/compile_commands.json
+	@echo '  {"directory":"'$(shell pwd)'","command":"clang++ -std=c++20 $(WARN) $(DBG) $(INCLUDES) -c tests/test_filesystem.cc","file":"tests/test_filesystem.cc"},' >> build/compile_commands.json
+	@echo '  {"directory":"'$(shell pwd)'","command":"clang++ -std=c++20 $(WARN) $(DBG) $(INCLUDES) -c tests/test_json.cc","file":"tests/test_json.cc"},' >> build/compile_commands.json
+	@echo '  {"directory":"'$(shell pwd)'","command":"clang++ -std=c++20 $(WARN) $(DBG) $(INCLUDES) -c tests/test_logging.cc","file":"tests/test_logging.cc"},' >> build/compile_commands.json
+	@echo '  {"directory":"'$(shell pwd)'","command":"clang++ -std=c++20 $(WARN) $(DBG) $(INCLUDES) -c tests/test_network.cc","file":"tests/test_network.cc"}' >> build/compile_commands.json
 	@echo ']' >> build/compile_commands.json
