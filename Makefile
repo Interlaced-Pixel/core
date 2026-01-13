@@ -2,12 +2,13 @@
 # Cross-platform build system with compiler detection
 
 # Variables
-CXX ?= clang++
+	CXX ?= clang++
 STD ?= c++23
 WARN := -Wall -Wextra -Wpedantic
 DBG := -g
 INCLUDES := -Iinclude -Ithird-party
 LIBS :=
+CLANG_TIDY ?= /opt/homebrew/Cellar/llvm/21.1.8/bin/clang-tidy
 
 # Platform detection
 UNAME := $(shell uname -s)
@@ -36,7 +37,7 @@ ifeq ($(IS_GCC),1)
 endif
 
 # Targets
-.PHONY: all build run build_test run_test coverage clean compile-commands
+.PHONY: all build run build_test run_test coverage clean compile-commands clang-tidy clang-tidy-fix
 
 all: clean build_test compile-commands coverage
 
@@ -63,3 +64,9 @@ clean:
 compile-commands: build_test
 	mkdir -p build
 	echo '[{"directory":"'$(shell pwd)'","command":"$(CXX) -std=$(STD) $(WARN) $(DBG) $(COV_CFLAGS) $(INCLUDES) -o build/unit_tests tests/doctest_main.cpp tests/test_filesystem.cc tests/test_json.cc tests/test_logging.cc tests/test_network.cc $(LIBS)","file":"tests/doctest_main.cpp"}]' > build/compile_commands.json
+
+clang-tidy: compile-commands
+	$(CLANG_TIDY) -p build $(shell find . -name "*.cpp" -o -name "*.cc" -o -name "*.hpp" -o -name "*.h" | grep -v "./build/" | grep -v "./third-party/")
+
+clang-tidy-fix: compile-commands
+	$(CLANG_TIDY) -p build --fix-errors $(shell find . -name "*.cpp" -o -name "*.cc" -o -name "*.hpp" -o -name "*.h" | grep -v "./build/" | grep -v "./third-party/")
